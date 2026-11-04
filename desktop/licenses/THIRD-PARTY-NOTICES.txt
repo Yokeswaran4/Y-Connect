@@ -1,6 +1,6 @@
 THIRD-PARTY NOTICES
 ===================
-Miku Connect is built on the open-source software below. Thank you to every
+Y Connect is built on the open-source software below. Thank you to every
 author and contributor. Each component remains under its own license.
 
 DESKTOP APP (Linux / Windows)
@@ -31,15 +31,16 @@ Android Gradle Plugin and Gradle (build tools only)
 
 LICENSE TEXTS
 -------------
-MIT License: permission is granted, free of charge, to any person obtaining a copy of the software
-and associated documentation files, to deal in the software without restriction, including the
-rights to use, copy, modify, merge, publish, distribute, sublicense and/or sell copies, subject to
-the copyright notice and this permission notice being included in all copies or substantial
-portions. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. The full text is in
-the "MIT License" section of this app.
+MIT License (applies to the components marked "MIT" above; their copyright holders are named above)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Apache License 2.0: full text at https://www.apache.org/licenses/LICENSE-2.0
 BSD-3-Clause: full text at https://opensource.org/license/bsd-3-clause
 GPL-2.0 / AFL-2.1 (D-Bus): https://www.freedesktop.org/wiki/Software/dbus/
 
-Miku Connect itself: MIT OR GPL-3.0-or-later (see LICENSE).
+Y Connect itself: GPL-3.0-or-later, Copyright (c) 2026 Yokeswaran N (see LICENSE).

@@ -1,14 +1,17 @@
-// SPDX-License-Identifier: MIT OR GPL-3.0-or-later
-// Copyright (c) 2026 Miku
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Yokeswaran N
 'use strict';
-const { app, BrowserWindow, ipcMain, clipboard, Notification, Tray, Menu, nativeImage, nativeTheme, systemPreferences, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, net, clipboard, Notification, Tray, Menu, nativeImage, nativeTheme, systemPreferences, shell, dialog } = require('electron');
 
 // Linux stability: avoid /dev/shm crashes, Wayland+Vulkan clashes and blank windows from GPU issues
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('disable-dev-shm-usage');
   app.commandLine.appendSwitch('disable-features', 'Vulkan');
   app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
-  app.disableHardwareAcceleration();
+  // Software rendering is the safe default (avoids blank windows on odd GPU setups) but it is much slower.
+  // Start with YCONNECT_GPU=1 to use the GPU: smoother animations on most machines.
+  if (process.env.YCONNECT_GPU !== '1') app.disableHardwareAcceleration();
+  else app.commandLine.appendSwitch('enable-gpu-rasterization');
 }
 const path = require('path');
 const os = require('os');
@@ -21,23 +24,25 @@ const remote = require('./remote');
 const battery = require('./battery');
 const autostart = require('./autostart');
 const deviceinfo = require('./deviceinfo');
+const updates = require('./updates');
+const legacy = require('./legacy');
 const latency = require('./latency').create({
   ids: () => [...peers.keys()],
   send: (id, obj) => { const p = peers.get(id); if (p) sendTo(p.ws, obj); },
   onChange: (id) => { if (win && !win.isDestroyed()) win.webContents.send('latency', id, latency.stats(id)); },
 });
 
-const VERSION_LABEL = 'Mitsuha_Miku_v1';
+const VERSION_LABEL = 'v1.1';
 const WS_PORT = 48998;
 const UDP_PORT = 48999;
-const SALT = 'miku-connect-v1';
+const SALT = 'y-connect-v1';
 const MAX_CLIP = 1024 * 1024;
 const ICON = path.join(__dirname, 'build', 'icon.png');
 
 if (process.platform === 'linux') app.commandLine.appendSwitch('no-sandbox');
 if (!app.requestSingleInstanceLock()) app.quit();
-app.setAppUserModelId('com.mitsuha.miku.connect');
-try { if (process.platform === 'linux') app.setDesktopName('miku-connect.desktop'); } catch {}
+app.setAppUserModelId('com.yokeswaran.yconnect');
+try { if (process.platform === 'linux') app.setDesktopName('y-connect.desktop'); } catch {}
 
 // An AppImage installs no menu entry, so docks and launchers cannot match its window to an icon.
 // On every start from an AppImage this writes the entry and icon into the user's folders (no root needed).
@@ -49,16 +54,18 @@ function integrateDesktop() {
     const appsDir = path.join(data, 'applications');
     fs.mkdirSync(iconDir, { recursive: true });
     fs.mkdirSync(appsDir, { recursive: true });
-    const icon = path.join(iconDir, 'miku-connect.png');
+    const icon = path.join(iconDir, 'y-connect.png');
     const src = fs.readFileSync(path.join(__dirname, 'build', 'icon.png'));
     let cur = null; try { cur = fs.readFileSync(icon); } catch {}
-    if (!cur || !cur.equals(src)) fs.writeFileSync(icon, src);
+    let iconChanged = false;
+    if (!cur || !cur.equals(src)) { fs.writeFileSync(icon, src); iconChanged = true; }
     const q = (x) => '"' + String(x).replace(/(["`$\\])/g, '\\$1') + '"';
-    const entry = ['[Desktop Entry]', 'Type=Application', 'Name=Miku Connect', 'Comment=Share notifications, clipboard and files between your devices',
-      'Exec=' + q(process.env.APPIMAGE), 'Icon=' + icon, 'Terminal=false', 'Categories=Utility;Network;', 'StartupWMClass=miku-connect', ''].join('\n');
-    const file = path.join(appsDir, 'miku-connect.desktop');
+    const entry = ['[Desktop Entry]', 'Type=Application', 'Name=Y Connect', 'Comment=Share notifications, clipboard and files between your devices',
+      'Exec=' + q(process.env.APPIMAGE), 'Icon=' + icon, 'Terminal=false', 'Categories=Utility;Network;', 'StartupWMClass=y-connect', ''].join('\n');
+    const file = path.join(appsDir, 'y-connect.desktop');
     let old = ''; try { old = fs.readFileSync(file, 'utf8'); } catch {}
-    if (old !== entry) fs.writeFileSync(file, entry);
+    if (old !== entry) { fs.writeFileSync(file, entry); iconChanged = true; }
+    if (iconChanged) legacy.refreshCaches(); // so the dock picks up the new icon without logging out
   } catch {}
 }
 
@@ -67,10 +74,11 @@ let key = null, config = null, lastClip = '', pushTimer = null;
 let logEntries = [];
 let autostartError = null; // { why, fix } when the last attempt to change launch-on-startup failed
 const startHidden = process.argv.includes('--hidden');
+let updateInfo = null;     // result of the last update check (shown in Settings)
 let myBattery = null;      // { level, charging } or null when this computer has no battery
 const peers = new Map();   // device id -> { ws, info }
 const pending = new Set(); // outgoing connections in progress
-const nearby = new Map();  // device id -> { id, name, platform, address, port, seen }  (every Miku Connect heard on the LAN)
+const nearby = new Map();  // device id -> { id, name, platform, address, port, seen }  (every Y Connect heard on the LAN)
 const NEARBY_TTL = 10000;
 let pairRequest = null;    // { id, name, address, time } - another device wants to pair with us
 let nearbySig = '';
@@ -99,8 +107,11 @@ function loadConfig() {
     batterySync: true,    // share this computer's battery level and show the phone's
     allowCommands: false, // phone may run commands here (never with sudo/admin). Off until the user turns it on
     theme: 'system', // system | light | dark
-    systemColors: true, // follow the OS accent colour; off = Miku blue
+    systemColors: true, // follow the OS accent colour; off = Y Connect blue
     ignored: [], // ids of devices that were unpaired: never auto-connect to them
+    autoUpdateCheck: false, // opt-in: look for a newer release about once a day and show a notification
+    lastUpdateCheck: 0,
+    notifiedVersion: '',
   }, saved);
   if (!Array.isArray(config.ignored)) config.ignored = [];
   if (!['system', 'light', 'dark'].includes(config.theme)) config.theme = 'system';
@@ -164,7 +175,7 @@ function localIps() {
   }
   return out;
 }
-/** Windows (and macOS) accent colour; falls back to Miku blue on Linux. */
+/** Windows (and macOS) accent colour; falls back to Y Connect blue on Linux. */
 function accentColor() {
   if (!config.systemColors) return '#5aa5f0';
   try {
@@ -177,7 +188,7 @@ function accentColor() {
 }
 const bgColor = () => (nativeTheme.shouldUseDarkColors ? '#202020' : '#f3f3f3');
 function snapshot() {
-  return { config, peers: [...peers.values()].map((p) => ({ ...p.info, lat: latency.stats(p.info.id) })), nearby: nearbyList(), pairRequest, log: logEntries, ips: localIps(), version: VERSION_LABEL, accent: accentColor(), platform: process.platform, transfers: transfer.list(), autostart: { supported: autostart.supported, enabled: autostart.isEnabled(), hidden: config.startHidden !== false, error: autostartError } };
+  return { config, peers: [...peers.values()].map((p) => ({ ...p.info, lat: latency.stats(p.info.id) })), nearby: nearbyList(), pairRequest, log: logEntries, ips: localIps(), version: VERSION_LABEL, accent: accentColor(), platform: process.platform, update: updateInfo && updateInfo.newer ? updateInfo : null, transfers: transfer.list(), autostart: { supported: autostart.supported, enabled: autostart.isEnabled(), hidden: config.startHidden !== false, error: autostartError } };
 }
 function pushState() {
   if (pushTimer) return;
@@ -305,7 +316,7 @@ function findIcon(name, appName) {
 function startNotifWatch() {
   require('./notifwatch').start(({ app: a, icon, title, text }) => {
     if (!config.notifySync || !peers.size) return;
-    if (/miku/i.test(a) || (!title && !text)) return; // never forward our own notifications
+    if (/y[ -]?connect/i.test(a) || (!title && !text)) return; // never forward our own notifications
     const key = title + '|' + text;
     const s = suppressed.get(key);
     if (s && Date.now() - s < 15000) return; // it is a notification we just showed for another device
@@ -424,7 +435,7 @@ function unpairDevice(id) {
 }
 
 /* ---------- nearby devices & pairing ---------- */
-// Nearby = devices running Miku Connect on this network that we are not connected to (yet).
+// Nearby = devices running Y Connect on this network that we are not connected to (yet).
 function nearbyList() {
   const now = Date.now();
   const out = [];
@@ -455,7 +466,7 @@ function sendPairRequest(id) {
   const n = nearby.get(id);
   if (!n) return null;
   unignoreDevice(id);
-  const msg = { app: 'mikuconnect', type: 'pair-request', id: config.id, name: config.name, platform: myPlatform() };
+  const msg = { app: 'yconnect', type: 'pair-request', id: config.id, name: config.name, platform: myPlatform() };
   udpSend(msg, n.address);
   setTimeout(() => udpSend(msg, n.address), 400); // UDP can drop packets
   addLog('info', 'Pairing started', 'Enter the code on ' + n.name);
@@ -463,7 +474,7 @@ function sendPairRequest(id) {
 }
 function cancelPair(id) {
   const n = nearby.get(id);
-  if (n) udpSend({ app: 'mikuconnect', type: 'pair-cancel', id: config.id }, n.address);
+  if (n) udpSend({ app: 'yconnect', type: 'pair-cancel', id: config.id }, n.address);
 }
 function onPairRequest(j, rinfo) {
   const id = cleanStr(j.id, 64);
@@ -498,7 +509,7 @@ function broadcastTargets() {
 }
 function beacon() {
   if (!udp) return;
-  const msg = Buffer.from(JSON.stringify({ app: 'mikuconnect', id: config.id, name: config.name, platform: myPlatform(), port: WS_PORT }));
+  const msg = Buffer.from(JSON.stringify({ app: 'yconnect', id: config.id, name: config.name, platform: myPlatform(), port: WS_PORT }));
   for (const target of broadcastTargets()) { try { udp.send(msg, UDP_PORT, target, () => {}); } catch {} }
 }
 function startDiscovery() {
@@ -507,7 +518,7 @@ function startDiscovery() {
   udp.on('message', (buf, rinfo) => {
     try {
       const j = JSON.parse(buf.toString());
-      if (j.app !== 'mikuconnect' || j.id === config.id) return;
+      if (j.app !== 'yconnect' || j.id === config.id) return;
       if (j.type === 'pair-request') return onPairRequest(j, rinfo);
       if (j.type === 'pair-cancel') return onPairCancel(j);
       if (j.type) return; // unknown message from a newer version
@@ -591,8 +602,8 @@ function createWindow(show = true) {
   win = new BrowserWindow({
     show,
     width: 940, height: 660, minWidth: 720, minHeight: 520,
-    backgroundColor: bgColor(), title: 'Miku Connect', icon: ICON, autoHideMenuBar: true,
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false },
+    backgroundColor: bgColor(), title: 'Y Connect', icon: ICON, autoHideMenuBar: true,
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: true },
   });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.on('close', (e) => { if (tray && !app.isQuitting) { e.preventDefault(); win.hide(); } });
@@ -600,9 +611,9 @@ function createWindow(show = true) {
 function createTray() {
   try {
     tray = new Tray(nativeImage.createFromPath(ICON).resize({ width: 24, height: 24 }));
-    tray.setToolTip('Miku Connect');
+    tray.setToolTip('Y Connect');
     tray.setContextMenu(Menu.buildFromTemplate([
-      { label: 'Open Miku Connect', click: showWindow },
+      { label: 'Open Y Connect', click: showWindow },
       { label: 'Quit', click: () => { app.isQuitting = true; app.quit(); } },
     ]));
     tray.on('click', showWindow);
@@ -611,15 +622,15 @@ function createTray() {
 
 /* ---------- IPC ---------- */
 ipcMain.handle('state', () => snapshot());
-const ALLOWED_LINKS = new Set(['https://discord.com/users/895560596064464956', 'https://instagram.com/miku_biggest_glazer']);
+const ALLOWED_LINKS = new Set(['https://discord.com/users/895560596064464956', 'https://www.reddit.com/user/yokeswaran_n']);
 ipcMain.handle('open-external', (_e, url) => {
-  if (!ALLOWED_LINKS.has(url)) return false;
+  if (!ALLOWED_LINKS.has(url) && !updates.SAFE_URL.test(String(url))) return false;
   shell.openExternal(url);
   return true;
 });
 ipcMain.handle('get-licenses', () => {
   const out = {};
-  for (const [k, f] of [['project', 'LICENSE.txt'], ['mit', 'LICENSE-MIT.txt'], ['gpl', 'LICENSE-GPL-3.0.txt'], ['third', 'THIRD-PARTY-NOTICES.txt']]) {
+  for (const [k, f] of [['gpl', 'LICENSE-GPL-3.0.txt'], ['third', 'THIRD-PARTY-NOTICES.txt']]) {
     try { out[k] = fs.readFileSync(path.join(__dirname, 'licenses', f), 'utf8'); } catch { out[k] = 'License file not found.'; }
   }
   return out;
@@ -647,6 +658,8 @@ ipcMain.handle('set-config', (_e, patch) => {
   if (typeof patch.batterySync === 'boolean') { config.batterySync = patch.batterySync; if (config.batterySync) sendBattery(); }
   if (typeof patch.allowCommands === 'boolean') config.allowCommands = patch.allowCommands;
   if (typeof patch.systemColors === 'boolean') config.systemColors = patch.systemColors;
+  const wantUpd = typeof patch.autoUpdateCheck === 'boolean' && patch.autoUpdateCheck && !config.autoUpdateCheck;
+  if (typeof patch.autoUpdateCheck === 'boolean') config.autoUpdateCheck = patch.autoUpdateCheck;
   if (['system', 'light', 'dark'].includes(patch.theme)) {
     config.theme = patch.theme;
     nativeTheme.themeSource = patch.theme;
@@ -655,6 +668,7 @@ ipcMain.handle('set-config', (_e, patch) => {
   saveConfig();
   if (norm(config.passphrase) !== oldPass) { config.ignored = []; saveConfig(); deriveKey(); closeAll(); addLog('info', 'Pairing code changed', 'Reconnecting…'); }
   else if (config.name !== oldName) broadcast(helloMsg());
+  if (wantUpd) checkForUpdates(true); // switched on: check right away so the result is visible
   pushState();
   return snapshot();
 });
@@ -678,8 +692,32 @@ ipcMain.handle('send-clipboard', async () => {
 });
 /* ---------- device info / debug report ---------- */
 const infoExtra = () => ({ label: VERSION_LABEL, startup: { enabled: autostart.isEnabled(), hidden: config.startHidden !== false }, tray: !!tray, battery: !!myBattery });
-ipcMain.handle('device-info', () => deviceinfo.collect(infoExtra()));
-const debugReport = async () => deviceinfo.toText(await deviceinfo.collect(infoExtra()), logEntries);
+// the Settings page only needs the short version, which is gathered once (it starts a few system commands)
+let infoCache = null;
+const loadInfo = () => infoCache || (infoCache = deviceinfo.collect(infoExtra()));
+ipcMain.handle('device-info', async () => ({ brief: (await loadInfo()).brief }));
+
+/* ---------- update check ---------- */
+async function checkForUpdates(notify) {
+  const r = await updates.check(VERSION_LABEL, (u, o) => net.fetch(u, o));
+  updateInfo = r;
+  if (r.ok) { config.lastUpdateCheck = Date.now(); saveConfig(); }
+  if (r.ok && r.newer) {
+    addLog('info', 'Update available', r.latest + ' is out (you have ' + VERSION_LABEL + ')');
+    if (notify && Notification.isSupported() && config.notifiedVersion !== r.latest) {
+      config.notifiedVersion = r.latest; saveConfig();
+      const n = new Notification({ title: 'Y Connect ' + r.latest + ' is available', body: 'Click to see what’s new and download it.', icon: ICON });
+      n.on('click', () => shell.openExternal(r.url));
+      n.show();
+    }
+  }
+  pushState();
+  return r;
+}
+ipcMain.handle('check-update', () => checkForUpdates(false));
+const autoCheckDue = () => config.autoUpdateCheck && Date.now() - (config.lastUpdateCheck || 0) > 24 * 3600 * 1000;
+
+const debugReport = async () => deviceinfo.toText(await deviceinfo.collect(infoExtra()), logEntries); // full details, built only when asked for
 ipcMain.handle('copy-debug-report', async () => {
   const t = await debugReport();
   lastClip = t; // so the clipboard watcher does not send the report to the other devices
@@ -687,13 +725,13 @@ ipcMain.handle('copy-debug-report', async () => {
   return true;
 });
 ipcMain.handle('save-debug-report', async () => {
-  const r = await dialog.showSaveDialog(win, { title: 'Save debug report', defaultPath: path.join(app.getPath('documents'), 'miku-connect-debug.txt'), filters: [{ name: 'Text', extensions: ['txt'] }] });
+  const r = await dialog.showSaveDialog(win, { title: 'Save debug report', defaultPath: path.join(app.getPath('documents'), 'y-connect-debug.txt'), filters: [{ name: 'Text', extensions: ['txt'] }] });
   if (r.canceled || !r.filePath) return false;
   try { fs.writeFileSync(r.filePath, await debugReport()); return true; } catch (e) { addLog('warn', 'Could not save debug report', e.message); return false; }
 });
 ipcMain.handle('ping-now', (_e, id) => { latency.burst(String(id)); return true; });
 ipcMain.handle('test-notification', () => {
-  return broadcast({ type: 'notification', app: 'Miku Connect', title: 'Test from ' + config.name, text: 'Notification sync works!', ts: Date.now() });
+  return broadcast({ type: 'notification', app: 'Y Connect', title: 'Test from ' + config.name, text: 'Notification sync works!', ts: Date.now() });
 });
 
 /* ---------- lifecycle ---------- */
@@ -701,6 +739,7 @@ app.on('second-instance', showWindow);
 app.on('before-quit', () => { app.isQuitting = true; });
 app.on('window-all-closed', () => { if (!tray) app.quit(); });
 app.whenReady().then(() => {
+  legacy.run(); // remove menu / startup entries and icons left by the previous name
   integrateDesktop();
   Menu.setApplicationMenu(null);
   loadConfig();
@@ -721,7 +760,9 @@ app.whenReady().then(() => {
   setInterval(pollClipboard, 700);
   startNotifWatch();
   pollBattery();
-  deviceinfo.collect(infoExtra()).then((i) => addLog('info', 'Device info', i.summary)).catch(() => {});
+  loadInfo().then((i) => addLog('info', 'Device info', i.summary)).catch(() => {});
+  setTimeout(() => { if (autoCheckDue()) checkForUpdates(true); }, 15000); // not during start-up
+  setInterval(() => { if (autoCheckDue()) checkForUpdates(true); }, 6 * 3600 * 1000);
   setInterval(pollBattery, 60000);
   setInterval(() => latency.tick(!!win && !win.isDestroyed() && win.isVisible() && !win.isMinimized()), 2000);
   setInterval(() => {

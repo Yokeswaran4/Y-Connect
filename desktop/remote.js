@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT OR GPL-3.0-or-later
-// Copyright (c) 2026 Miku
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Yokeswaran N
 'use strict';
 /*
  * Remote commands requested by a paired Android phone. Removing files is not offered at all.
@@ -65,23 +65,23 @@ function explainExit({ code, signal, stderr, stdout, timedOut, timeout, cancelle
   const text = (stderr + '\n' + stdout).slice(0, 6000);
   if (cancelled) return E('cancelled', 'You cancelled the command.', 'Run it again if you still need it.');
   if (timedOut) {
-    return E('timeout', `The command was still running after ${timeout} seconds, so Miku Connect stopped it. Programs that never finish on their own (top, ping without a count, tail -f, editors, installers waiting for input) always end up here.`,
+    return E('timeout', `The command was still running after ${timeout} seconds, so Y Connect stopped it. Programs that never finish on their own (top, ping without a count, tail -f, editors, installers waiting for input) always end up here.`,
       IS_WIN ? 'Use a version that ends by itself (for example ping -n 4 host), or raise the time limit on the phone (max 120 s).'
         : 'Use a version that ends by itself (for example ping -c 4 host, or top -b -n 1), or raise the time limit on the phone (max 120 s).');
   }
   if (/password is required|a terminal is required|must be run from a terminal|no tty present|askpass/i.test(text)) {
-    return E('needs-terminal', 'The command wanted a password or an interactive terminal. Miku Connect has neither: it never elevates and nothing can be typed while a command runs.',
+    return E('needs-terminal', 'The command wanted a password or an interactive terminal. Y Connect has neither: it never elevates and nothing can be typed while a command runs.',
       'Use a command that does not need admin rights, or run this one directly on the computer.');
   }
   if (/permission denied|operation not permitted|access is denied|EACCES|EPERM|requires elevation|requested operation requires/i.test(text)) {
     return IS_WIN
-      ? E('permission', 'Windows refused: the command touched something that needs administrator rights, or a file/folder you do not own. Miku Connect never runs as administrator.',
+      ? E('permission', 'Windows refused: the command touched something that needs administrator rights, or a file/folder you do not own. Y Connect never runs as administrator.',
         'Use a path inside your own user folder (C:\\Users\\<you>\\...), or run this one directly on the computer as administrator.')
-      : E('permission', 'Linux refused: the command touched something only root (or another user) may use. Miku Connect never uses sudo.',
+      : E('permission', 'Linux refused: the command touched something only root (or another user) may use. Y Connect never uses sudo.',
         'Use a path you own (your home folder), or check it with: ls -l <path>. If it is your own file, fix it on the computer with chmod / chown.');
   }
   if (code === 127 || /command not found|: not found|is not recognized as (?:an internal|the name)|cannot find the (?:file|path) specified|CommandNotFoundException|ENOENT.*spawn/i.test(text) || code === 9009) {
-    return E('not-found', `The program does not exist on ${me()} or is not on the PATH that Miku Connect sees (apps started from the tray or an AppImage get a shorter PATH than a terminal).`,
+    return E('not-found', `The program does not exist on ${me()} or is not on the PATH that Y Connect sees (apps started from the tray or an AppImage get a shorter PATH than a terminal).`,
       IS_WIN ? 'Check the spelling, install the program, or type its full path, e.g. "C:\\Program Files\\App\\app.exe". Try: where <name>'
         : 'Check the spelling, install the program (apt/dnf/pacman), or type its full path, e.g. /usr/bin/<name>. Try: which <name>');
   }
@@ -144,7 +144,7 @@ function runCommand(ws, who, msg) {
   if (!cfg.allowCommands) {
     D.addLog('warn', 'Command refused', `${who.name} tried to run a command but remote commands are off`);
     return fail(ws, rid, E('disabled', `Remote commands are turned off on ${me()}. This is the default, so nothing runs unless you allow it.`,
-      `On ${me()}: open Miku Connect > Sync > "Allow commands from phone" and switch it on, then try again.`));
+      `On ${me()}: open Y Connect > Sync > "Allow commands from phone" and switch it on, then try again.`));
   }
   if (!cmd) return fail(ws, rid, E('empty', 'The command is empty.', 'Type a command and try again.'));
   if (cmd.length > MAX_CMD) return fail(ws, rid, E('too-long', `The command is longer than ${MAX_CMD} characters.`, 'Put it in a script file on the computer and run that instead.'));
@@ -152,7 +152,7 @@ function runCommand(ws, who, msg) {
   const elev = findElevation(cmd);
   if (elev) {
     D.addLog('warn', 'Command refused', `Needs elevation (${elev}): ${preview(cmd)}`);
-    return fail(ws, rid, E('elevation', `"${elev}" asks for administrator / root rights. Miku Connect only runs commands that do not need sudo or admin, because nobody can type a password remotely and an elevated remote shell is dangerous.`,
+    return fail(ws, rid, E('elevation', `"${elev}" asks for administrator / root rights. Y Connect only runs commands that do not need sudo or admin, because nobody can type a password remotely and an elevated remote shell is dangerous.`,
       'Remove the elevation part and run it as a normal user, or run this command directly on the computer.'));
   }
   const del = findDeletion(cmd);
@@ -224,8 +224,8 @@ function runCommand(ws, who, msg) {
 
 function explainSpawn(e, file) {
   if (e && e.code === 'ENOENT') return E('no-shell', `The shell (${file}) could not be started on ${me()}.`, IS_WIN ? 'Check that cmd.exe / powershell.exe exist and are not blocked by security software.' : 'Check that /bin/sh exists. On a very minimal system install a shell package (dash or bash).');
-  if (e && (e.code === 'EACCES' || e.code === 'EPERM')) return E('permission', `Not allowed to start the shell (${file}).`, 'Security software or a sandbox is blocking Miku Connect from starting programs. Allow it there.');
-  return E('spawn-failed', `The command could not be started: ${(e && e.message) || 'unknown error'}.`, 'Try again; if it keeps failing, restart Miku Connect on the computer.');
+  if (e && (e.code === 'EACCES' || e.code === 'EPERM')) return E('permission', `Not allowed to start the shell (${file}).`, 'Security software or a sandbox is blocking Y Connect from starting programs. Allow it there.');
+  return E('spawn-failed', `The command could not be started: ${(e && e.message) || 'unknown error'}.`, 'Try again; if it keeps failing, restart Y Connect on the computer.');
 }
 
 /* ---------- entry points ---------- */
@@ -241,7 +241,7 @@ function onMessage(ws, msg) {
   else if (msg.type === 'cmd-rm') {
     // retired: an older phone may still send it, so answer instead of leaving it waiting
     D.addLog('warn', 'Removal refused', `${who.name} tried to remove a file; removing files from the phone is not allowed`);
-    if (rid) fail(ws, rid, E('removal-blocked', `Removing files from the phone is not allowed on ${me()}.`, 'Delete the file directly on the computer. Update Miku Connect on the phone to remove this option.'));
+    if (rid) fail(ws, rid, E('removal-blocked', `Removing files from the phone is not allowed on ${me()}.`, 'Delete the file directly on the computer. Update Y Connect on the phone to remove this option.'));
   }
   else if (msg.type === 'cmd-cancel') {
     const j = running.get(rid);

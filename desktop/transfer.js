@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: MIT OR GPL-3.0-or-later
-// Copyright (c) 2026 Miku
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Yokeswaran N
 'use strict';
 /*
- * File transfer over the already-encrypted Miku Connect WebSocket.
+ * File transfer over the already-encrypted Y Connect WebSocket.
  *
  *   sender                                   receiver
  *   file-offer {tid,name,size}   ------->
@@ -34,7 +34,7 @@ const incoming = new Map();  // tid -> transfer being received
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const isFinal = (t) => FINAL.has(t.status);
-const downloadDir = () => path.join(app.getPath('downloads'), 'MikuConnect');
+const downloadDir = () => path.join(app.getPath('downloads'), 'YConnect');
 const fmtSize = (b) => {
   if (b < 1024) return b + ' B';
   const u = ['KB', 'MB', 'GB', 'TB'];

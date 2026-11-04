@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT OR GPL-3.0-or-later
-// Copyright (c) 2026 Miku
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Yokeswaran N
 'use strict';
 // "About this device" for Windows and Linux: hardware model, CPU, OS and desktop / window manager.
 // Used by the Settings page and the debug report. It never includes the computer name, IP addresses,
@@ -115,7 +115,8 @@ async function linuxInfo() {
 
 /**
  * Gathers the device info. `extra` = { label, startup: { enabled, hidden }, tray, battery } from the main process.
- * Returns { sections: [{ title, rows: [[label, value]] }], summary } (summary is one line for the Activity log).
+ * Returns { sections, summary, brief }: `sections` = [{ title, rows: [[label, value]] }] for the debug report,
+ * `summary` = one line for the Activity log, `brief` = the few [label, value] rows the Settings page shows.
  */
 async function collect(extra = {}) {
   const d = process.platform === 'win32' ? await windowsInfo() : await linuxInfo();
@@ -150,12 +151,18 @@ async function collect(extra = {}) {
   ];
   const summary = [d.model.startsWith('Not reported') ? '' : d.model, d.os, cpuInfo().replace(/ @ .*| · \d+ threads/g, ''), join(d.desktop === 'Not detected' ? '' : d.desktop, d.session && d.session !== 'Unknown' ? `(${d.session})` : '')]
     .filter(Boolean).join(' · ');
-  return { sections, summary };
+  // the Settings page only shows these few lines; the long list above goes into the debug report
+  const brief = [
+    ['Device', d.model.startsWith('Not reported') ? '' : d.model],
+    ['System', d.os],
+    ['Y Connect', join(app.getVersion(), extra.label ? `(${extra.label})` : '')],
+  ].filter(([, v]) => v);
+  return { sections, summary, brief };
 }
 
 /** Plain-text report for bug reports: the device info plus the recent activity log. */
 function toText(info, log = []) {
-  const out = ['Miku Connect debug report', 'Generated: ' + new Date().toISOString(), ''];
+  const out = ['Y Connect debug report', 'Generated: ' + new Date().toISOString(), ''];
   for (const s of info.sections) {
     out.push('[' + s.title + ']');
     for (const [k, v] of s.rows) out.push(`${k}: ${v}`);

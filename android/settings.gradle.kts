@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "MikuConnect"
+rootProject.name = "YConnect"
 include(":app")

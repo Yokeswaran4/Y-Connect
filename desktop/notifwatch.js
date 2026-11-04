@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT OR GPL-3.0-or-later
-// Copyright (c) 2026 Miku
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Yokeswaran N
 'use strict';
 // Linux only: watches desktop notifications on the D-Bus session bus (needs the `dbus-monitor` tool,
 // package "dbus" / "dbus-bin") and reports each one to onNotify({ app, title, text }).

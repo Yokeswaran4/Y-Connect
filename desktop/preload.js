@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: MIT OR GPL-3.0-or-later
-// Copyright (c) 2026 Miku
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Yokeswaran N
 'use strict';
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
-contextBridge.exposeInMainWorld('miku', {
+contextBridge.exposeInMainWorld('yconnect', {
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   getDeviceInfo: () => ipcRenderer.invoke('device-info'),
+  checkUpdate: () => ipcRenderer.invoke('check-update'),
   copyDebugReport: () => ipcRenderer.invoke('copy-debug-report'),
   saveDebugReport: () => ipcRenderer.invoke('save-debug-report'),
   pingNow: (id) => ipcRenderer.invoke('ping-now', id),

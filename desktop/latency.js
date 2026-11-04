@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT OR GPL-3.0-or-later
-// Copyright (c) 2026 Miku
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Yokeswaran N
 'use strict';
 // Connection latency to each paired device: a small encrypted "ping" goes over the same link as everything else
 // and the other side answers with "pong", so the number is what clipboard / notifications / files really experience.

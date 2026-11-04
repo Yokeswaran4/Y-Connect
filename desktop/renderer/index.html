@@ -4,116 +4,226 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Miku Connect</title>
+<title>Y Connect</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<!-- icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-devices" viewBox="0 0 24 24"><rect x="2.500" y="4" width="14" height="10" rx="2"/><path d="M6 18h7M9.500 14v4"/><rect x="15" y="9" width="6.500" height="11" rx="1.800"/></symbol>
+  <symbol id="i-transfers" viewBox="0 0 24 24"><path d="M7 20V5m0 0L3.500 8.500M7 5l3.500 3.500M17 4v15m0 0-3.500-3.500M17 19l3.500-3.500"/></symbol>
+  <symbol id="i-sync" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.300L20 9M20 12a8 8 0 0 1-14 5.300L4 15M20 4v5h-5M4 20v-5h5"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.200"/><circle cx="9" cy="17" r="2.200"/></symbol>
+  <symbol id="i-contact" viewBox="0 0 24 24"><path d="M4 5.500h16v11H9.500L5 20v-3.500H4z"/><path d="M8 10h8M8 13h5"/></symbol>
+  <symbol id="i-licenses" viewBox="0 0 24 24"><path d="M6 3h8.500L19 7.500V21H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.500" y="2.500" width="11" height="19" rx="2.800"/><path d="M10.500 18.500h3"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4.500" y="5" width="15" height="10" rx="1.800"/><path d="M2.500 19h19"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M9 20h6M12 16v4"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6.500A1.500 1.500 0 0 1 4.500 5H9l2 2.500h8.500A1.500 1.500 0 0 1 21 9v9a1.500 1.500 0 0 1-1.500 1.500h-15A1.500 1.500 0 0 1 3 18z"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10.500 13.500M21 3l-6.500 18-4-7.500L3 9.500z"/></symbol>
+  <symbol id="i-unlink" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.600 0l3-3a4 4 0 0 0-5.600-5.600L12 6.400M14 10a4 4 0 0 0-5.600 0l-3 3a4 4 0 0 0 5.600 5.600l1-1M4 4l16 16"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4.500 13.500H11L10 22l8.500-11.500H12z"/></symbol>
+  <symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.500" y="7.500" width="16" height="9" rx="2.200"/><path d="M21.500 10.500v3"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.500"/><path d="m16 16 4.500 4.500"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.500" y="8.500" width="11" height="11" rx="2.200"/><path d="M15.500 8.500V6.200A2.200 2.200 0 0 0 13.300 4H6.200A2.200 2.200 0 0 0 4 6.200v7.100a2.200 2.200 0 0 0 2.200 2.200h2.300"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.500 4.500 4.500L19 7.500"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2.500 9.500a14 14 0 0 1 19 0M5.500 13a9.500 9.500 0 0 1 13 0M8.600 16.300a5 5 0 0 1 6.800 0"/><circle cx="12" cy="19.500" r=".8" fill="currentColor"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M16 7l2.500 2.500M14 9l2 2"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.500-3.500M4 4v4h4M4 13a8 8 0 0 0 14.500 3.500M20 20v-4h-4"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.500v2M12 19.500v2M2.500 12h2M19.500 12h2M5.300 5.300l1.400 1.400M17.300 17.300l1.400 1.400M18.700 5.300l-1.400 1.400M6.700 17.300l-1.400 1.400"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.500A8.500 8.500 0 0 1 9.500 4 8.500 8.500 0 1 0 20 14.500z"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.500"/><path d="M12 3.500v17" /><path d="M12 3.500a8.500 8.500 0 0 1 0 17z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4.500" width="14" height="16.500" rx="2.200"/><path d="M9 4.500V4a1.500 1.500 0 0 1 1.500-1.500h3A1.500 1.500 0 0 1 15 4v.5M8.500 11h7M8.500 15h5"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 17.500V11a6 6 0 0 1 12 0v6.500l1.500 1.500h-15zM10 21.500h4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.500 6v5.500c0 4.600 3.100 8.200 7.500 9.500 4.400-1.300 7.500-4.900 7.500-9.500V6z"/><path d="m9 12 2.200 2.200L15.500 10"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="3" y="4.500" width="18" height="15" rx="2.500"/><path d="m7.500 10 3 2.500-3 2.500M13 15h4"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v8M6.500 6.500a8 8 0 1 0 11 0"/></symbol>
+  <symbol id="i-resume" viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m0 0-5-5m5 5-5 5"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.500"/><path d="M7.500 7.500a6.400 6.400 0 0 0 0 9M16.500 7.500a6.400 6.400 0 0 1 0 9M4.500 4.500a10.600 10.600 0 0 0 0 15M19.500 4.500a10.600 10.600 0 0 1 0 15"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.500M12 7.700v.1"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3.500 2.500 20h19z"/><path d="M12 10v4.500M12 17.300v.1"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.500 7V4.500h5V7M6.500 7l.8 13h9.400l.8-13M10 11v6M14 11v6"/></symbol>
+</defs></svg>
+
+<div class="bg" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i></div>
+
 <div class="app">
-  <nav>
-    <div class="brand"><img src="logo.png" alt=""><div><b>Miku Connect</b><small id="ips">Looking…</small></div></div>
-    <div class="pill" id="pill"></div>
-    <button class="tab on" data-page="devices"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="13" height="10" rx="2"/><rect x="14" y="10" width="7" height="10" rx="2"/></svg><span>Devices</span><i class="badge hide" id="bDev">0</i></button>
-    <button class="tab" data-page="transfers"><svg viewBox="0 0 24 24"><path d="M7 4v14m0 0-4-4m4 4 4-4M17 20V6m0 0-4 4m4-4 4 4"/></svg><span>Transfers</span><i class="badge hide" id="bTr">0</i></button>
-    <button class="tab" data-page="sync"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5l2 2M20 12a8 8 0 0 1-14 5l-2-2M20 4v5h-5M4 20v-5h5"/></svg><span>Sync</span></button>
-    <button class="tab" data-page="activity"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span>Activity</span></button>
-    <button class="tab" data-page="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/></svg><span>Settings</span></button>
-    <button class="tab" data-page="contact"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg><span>Contact</span></button>
-    <button class="tab" data-page="licenses"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>Licenses</span></button>
-    <div class="status"><b><i class="led" id="led"></i><span id="stTxt">Searching…</span></b></div>
+  <nav class="rail">
+    <div class="brand"><img src="logo.png" alt=""><div><b>Y Connect</b><small>Your devices, in sync</small></div></div>
+    <div class="tabs" id="tabs">
+      <div class="pill" id="pill"></div>
+      <button class="tab on" data-page="devices" data-title="Devices" data-sub="Everything connected to your network, ready for files."><svg><use href="#i-devices"/></svg><span>Devices</span><i class="badge hide" id="bDev">0</i></button>
+      <button class="tab" data-page="transfers" data-title="Transfers" data-sub="Files and folders moving between your devices."><svg><use href="#i-transfers"/></svg><span>Transfers</span><i class="badge hide" id="bTr">0</i></button>
+      <button class="tab" data-page="sync" data-title="Sync" data-sub="Pick what is shared across your devices."><svg><use href="#i-sync"/></svg><span>Sync</span></button>
+      <button class="tab" data-page="activity" data-title="Activity" data-sub="A live timeline of what happened on this device."><svg><use href="#i-activity"/></svg><span>Activity</span></button>
+      <button class="tab" data-page="settings" data-title="Settings" data-sub="Name this device, set the pairing code and tune the look."><svg><use href="#i-settings"/></svg><span>Settings</span></button>
+      <button class="tab" data-page="contact" data-title="Contact" data-sub="Questions, bugs or ideas? Reach out."><svg><use href="#i-contact"/></svg><span>Contact</span></button>
+      <button class="tab" data-page="licenses" data-title="Licenses" data-sub="Free software, licensed under the GNU GPL v3.0 or later."><svg><use href="#i-licenses"/></svg><span>Licenses</span></button>
+    </div>
+    <div class="status">
+      <div class="st-row"><i class="led" id="led"></i><b id="stTxt">Searching…</b></div>
+      <button class="st-ip" id="ips" title="Click to copy this computer's address">Looking…</button>
+    </div>
   </nav>
+
   <main>
+    <header class="top">
+      <div class="titles"><h1 id="pgTitle">Devices</h1><p class="sub" id="pgSub"></p></div>
+      <button class="kbtn" id="btnPalette" title="Quick actions"><svg><use href="#i-search"/></svg><span>Quick actions</span><kbd>Ctrl</kbd><kbd>K</kbd></button>
+    </header>
+
+    <div class="pages">
     <section class="page on" id="p-devices">
-      <h1>Devices</h1><p class="sub">Drop files or folders on a device to send them instantly.</p>
+      <div class="stats">
+        <div class="stat"><span class="si"><svg><use href="#i-devices"/></svg></span><div><b id="statDev">0</b><small>Connected</small></div></div>
+        <div class="stat"><span class="si"><svg><use href="#i-transfers"/></svg></span><div><b id="statTr">0</b><small>Active transfers</small></div></div>
+        <div class="stat"><span class="si"><svg><use href="#i-pulse"/></svg></span><div><b id="statNear">0</b><small>Nearby to pair</small></div></div>
+      </div>
       <div id="hint"></div>
-      <div id="peers"></div>
-      <div class="card" id="nearbyCard"><h2>Nearby devices</h2><p class="dim s" style="margin:0 0 10px">Miku Connect is open on these devices. Click one to get a pairing code, then enter that code on the other device.</p>
+
+      <div class="sec"><h2>Connected</h2><span class="hint-s">Drop files onto a card to send instantly</span></div>
+      <div id="peers" class="grid"></div>
+
+      <div class="sec"><h2>Nearby devices</h2><button class="b ghost sm" id="btnHaveCode"><svg><use href="#i-key"/></svg>I have a code</button></div>
+      <div class="card" id="nearbyCard">
+        <p class="dim s lead">Y Connect is open on these devices. Pick one to get a pairing code, then type that code on the other device.</p>
         <div id="nearby"></div>
-        <div class="btns" style="margin-top:4px"><button class="b ghost sm" id="btnHaveCode">I have a code</button></div></div>
-      <div class="card"><h2>Connect by IP</h2><p class="dim s" style="margin:0 0 6px">Use this if a device doesn’t appear on its own (guest Wi-Fi, router isolation).</p>
-        <div class="row"><input type="text" id="ip" placeholder="192.168.1.23"><button class="b ghost" id="btnConnect">Connect</button></div></div>
-    </section>
-    <section class="page" id="p-transfers">
-      <h1>Transfers</h1><p class="sub">Files moving between your devices.</p>
-      <div class="btns" style="margin:0 0 14px"><button class="b ghost sm" id="btnOpenDl">Open downloads folder</button><button class="b ghost sm" id="btnClearTr">Clear finished</button></div>
-      <div id="transfers"></div>
-    </section>
-    <section class="page" id="p-sync">
-      <h1>Sync</h1><p class="sub">Choose what is shared across your devices.</p>
+      </div>
+
+      <div class="sec"><h2>Connect by IP</h2></div>
       <div class="card">
-        <div class="tg"><div>Clipboard sync<small>Copy on one device, paste on another</small></div><label class="sw"><input type="checkbox" id="tClip"></label></div>
-        <div class="tg"><div>Notifications<small>Show other devices’ notifications here and send this computer’s to them</small></div><label class="sw"><input type="checkbox" id="tNotif"></label></div>
-        <div class="tg"><div>Battery level<small>Share this computer's battery (laptops) and show your phone's</small></div><label class="sw"><input type="checkbox" id="tBat"></label></div>
-        <div class="tg"><div>Accept incoming files<small>Saved to Downloads/MikuConnect</small></div><label class="sw"><input type="checkbox" id="tFiles"></label></div>
+        <p class="dim s lead">Use this if a device doesn’t show up by itself (guest Wi-Fi, router isolation).</p>
+        <div class="row"><div class="field"><svg><use href="#i-wifi"/></svg><input type="text" id="ip" placeholder="192.168.1.23" spellcheck="false"></div><button class="b" id="btnConnect">Connect</button></div>
       </div>
-      <div class="card"><h2>Remote control from your phone</h2>
-        <p class="dim s" style="margin:0 0 6px">Lets a paired Android phone run commands on this computer. It is <b>off by default</b>. Commands never run with sudo / administrator rights, and deleting files (rm, del, Remove-Item …) is always refused. Only phones paired with your code can ask.</p>
-        <div class="tg"><div>Allow commands from phone<small>Runs as your normal user; stops after at most 2 minutes</small></div><label class="sw"><input type="checkbox" id="tCmd"></label></div>
-      </div>
-      <div class="btns"><button class="b" id="btnSend">Send clipboard now</button><button class="b ghost" id="btnTest">Send test notification</button></div>
     </section>
+
+    <section class="page" id="p-transfers">
+      <div class="toolbar">
+        <button class="b ghost sm" id="btnOpenDl"><svg><use href="#i-folder"/></svg>Open downloads folder</button>
+        <button class="b ghost sm" id="btnClearTr"><svg><use href="#i-trash"/></svg>Clear finished</button>
+      </div>
+      <div class="seg" id="trFilter" role="tablist">
+        <button class="on" data-f="all">All <i class="cnt" id="cAll">0</i></button>
+        <button data-f="sent">Sent <i class="cnt" id="cSent">0</i></button>
+        <button data-f="received">Received <i class="cnt" id="cRecv">0</i></button>
+        <button data-f="queued">Queued <i class="cnt" id="cQueued">0</i></button>
+      </div>
+      <div id="transfers" class="stack"></div>
+    </section>
+
+    <section class="page" id="p-sync">
+      <div class="quick">
+        <button class="qa" id="btnSend"><span class="qi"><svg><use href="#i-clipboard"/></svg></span><b>Send clipboard now</b><small>Push what you copied to every device</small></button>
+        <button class="qa" id="btnTest"><span class="qi"><svg><use href="#i-bell"/></svg></span><b>Send test notification</b><small>Check that alerts reach your phone</small></button>
+      </div>
+      <div class="card list">
+        <div class="tg"><span class="ti"><svg><use href="#i-clipboard"/></svg></span><div class="grow">Clipboard sync<small>Copy on one device, paste on another</small></div><label class="sw"><input type="checkbox" id="tClip"></label></div>
+        <div class="tg"><span class="ti"><svg><use href="#i-bell"/></svg></span><div class="grow">Notifications<small>Show other devices’ notifications here and send this computer’s to them</small></div><label class="sw"><input type="checkbox" id="tNotif"></label></div>
+        <div class="tg"><span class="ti"><svg><use href="#i-battery"/></svg></span><div class="grow">Battery level<small>Share this computer's battery (laptops) and show your phone's</small></div><label class="sw"><input type="checkbox" id="tBat"></label></div>
+        <div class="tg"><span class="ti"><svg><use href="#i-download"/></svg></span><div class="grow">Accept incoming files<small>Saved to Downloads/YConnect</small></div><label class="sw"><input type="checkbox" id="tFiles"></label></div>
+      </div>
+      <div class="card danger-card">
+        <h2><svg><use href="#i-terminal"/></svg>Remote control from your phone</h2>
+        <p class="dim s lead">Lets a paired Android phone run commands on this computer. It is <b>off by default</b>. Commands never run with sudo / administrator rights, and deleting files (rm, del, Remove-Item …) is always refused. Only phones paired with your code can ask.</p>
+        <div class="tg"><span class="ti warn"><svg><use href="#i-shield"/></svg></span><div class="grow">Allow commands from phone<small>Runs as your normal user; stops after at most 2 minutes</small></div><label class="sw"><input type="checkbox" id="tCmd"></label></div>
+      </div>
+    </section>
+
     <section class="page" id="p-activity">
-      <h1>Activity</h1><p class="sub">Recent events on this device.</p>
-      <div class="card" id="log"></div>
+      <div class="toolbar">
+        <div class="seg" id="logSeg"><button class="on" data-f="all">All</button><button data-f="warn">Warnings</button></div>
+        <span class="dim s" id="logCount"></span>
+      </div>
+      <div class="card timeline" id="log"></div>
     </section>
+
     <section class="page" id="p-contact">
-      <h1>Contact</h1><p class="sub">Questions, bugs or ideas? Reach out.</p>
-      <a class="link-card" data-url="https://discord.com/users/895560596064464956"><span class="avatar"><svg viewBox="0 0 24 24"><path d="M5.500 6.200C7.300 5 9.200 4.500 9.200 4.500l.6 1.200a12 12 0 0 1 4.400 0l.6-1.200s1.900.5 3.700 1.700C20.200 9 21 12.200 20.800 16c-1.500 1.200-3 1.800-4.400 2.200l-1-1.600c.5-.2 1-.4 1.400-.7a9 9 0 0 1-9.600 0c.4.300.9.500 1.400.7l-1 1.600C5.800 17.800 4.300 17.200 2.800 16 2.600 12.200 3.500 9 5.500 6.200z"/><circle cx="9" cy="12" r="1.300" fill="currentColor"/><circle cx="15" cy="12" r="1.300" fill="currentColor"/></svg></span><div class="grow"><b>Discord</b><div class="dim s">Message me on Discord</div></div><span class="arrow">→</span></a>
-      <a class="link-card" data-url="https://instagram.com/miku_biggest_glazer"><span class="avatar"><svg viewBox="0 0 24 24"><rect x="3.500" y="3.500" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r="1" fill="currentColor"/></svg></span><div class="grow"><b>Instagram</b><div class="dim s">@miku_biggest_glazer</div></div><span class="arrow">→</span></a>
+      <a class="link-card" data-url="https://discord.com/users/895560596064464956"><span class="avatar"><svg viewBox="0 0 24 24"><path d="M5.500 6.200C7.300 5 9.200 4.500 9.200 4.500l.6 1.200a12 12 0 0 1 4.400 0l.6-1.200s1.900.5 3.700 1.700C20.200 9 21 12.200 20.800 16c-1.500 1.200-3 1.800-4.400 2.200l-1-1.600c.5-.2 1-.4 1.400-.7a9 9 0 0 1-9.600 0c.4.300.9.500 1.400.7l-1 1.600C5.800 17.800 4.300 17.200 2.800 16 2.600 12.200 3.500 9 5.500 6.200z"/><circle cx="9" cy="12" r="1.300" fill="currentColor"/><circle cx="15" cy="12" r="1.300" fill="currentColor"/></svg></span><div class="grow"><b>Discord</b><div class="dim s">Message me on Discord</div></div><svg class="arrow"><use href="#i-arrow"/></svg></a>
+      <a class="link-card" data-url="https://www.reddit.com/user/yokeswaran_n"><span class="avatar"><svg viewBox="0 0 24 24"><path d="M12 8.500c-4 0-7 2.200-7 5s3 5 7 5 7-2.200 7-5-3-5-7-5z"/><path d="M12 8.500l1-4.500 3.500.8"/><path d="M9.300 16c1.500 1 4 1 5.400 0"/><circle cx="9.200" cy="13" r="1.100" fill="currentColor"/><circle cx="14.800" cy="13" r="1.100" fill="currentColor"/><circle cx="4.600" cy="11.400" r="1.400" fill="currentColor"/><circle cx="19.400" cy="11.400" r="1.400" fill="currentColor"/><circle cx="17.300" cy="4.900" r="1" fill="currentColor"/></svg></span><div class="grow"><b>Reddit</b><div class="dim s">u/yokeswaran_n</div></div><svg class="arrow"><use href="#i-arrow"/></svg></a>
       <p class="dim s">Links open in your default browser or app.</p>
     </section>
+
     <section class="page" id="p-licenses">
-      <h1>Licenses</h1><p class="sub">Miku Connect is dual-licensed: MIT or GPL-3.0-or-later, at your option.</p>
-      <details class="card" id="dProject"><summary>Project license</summary><pre data-key="project"></pre></details>
-      <details class="card"><summary>MIT License</summary><pre data-key="mit"></pre></details>
-      <details class="card"><summary>GNU GPL v3.0</summary><pre data-key="gpl"></pre></details>
+      <details class="card"><summary>GNU GPL v3.0 (project license)</summary><pre data-key="gpl"></pre></details>
       <details class="card"><summary>Third-party notices</summary><pre data-key="third"></pre></details>
-      <div class="card"><h2>Open-source components</h2>
-        <div class="tg"><div>Electron<small>Desktop runtime</small></div><span class="chip">MIT</span></div>
-        <div class="tg"><div>Chromium<small>Browser engine inside Electron</small></div><span class="chip">BSD-3</span></div>
-        <div class="tg"><div>Node.js<small>JavaScript runtime inside Electron</small></div><span class="chip">MIT</span></div>
-        <div class="tg"><div>ws<small>WebSocket library</small></div><span class="chip">MIT</span></div>
-        <div class="tg"><div>electron-builder<small>Packaging tool (build time only)</small></div><span class="chip">MIT</span></div>
-        <div class="tg"><div>D-Bus (dbus-monitor)<small>Optional Linux tool, not bundled</small></div><span class="chip">AFL / GPL-2+</span></div></div>
+      <div class="card list"><h2>Open-source components</h2>
+        <div class="tg"><div class="grow">Electron<small>Desktop runtime</small></div><span class="chip">MIT</span></div>
+        <div class="tg"><div class="grow">Chromium<small>Browser engine inside Electron</small></div><span class="chip">BSD-3</span></div>
+        <div class="tg"><div class="grow">Node.js<small>JavaScript runtime inside Electron</small></div><span class="chip">MIT</span></div>
+        <div class="tg"><div class="grow">ws<small>WebSocket library</small></div><span class="chip">MIT</span></div>
+        <div class="tg"><div class="grow">electron-builder<small>Packaging tool (build time only)</small></div><span class="chip">MIT</span></div>
+        <div class="tg"><div class="grow">D-Bus (dbus-monitor)<small>Optional Linux tool, not bundled</small></div><span class="chip">AFL / GPL-2+</span></div></div>
     </section>
+
     <section class="page" id="p-settings">
-      <h1>Settings</h1><p class="sub">Name this device and set the shared pairing code.</p>
-      <div class="card"><h2>Appearance</h2>
-        <div class="seg" id="seg"><button data-theme="system">System</button><button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
-        <div class="tg"><div>Use system colors<small id="colHint">Follow the system accent color. Off uses Miku blue.</small></div><label class="sw"><input type="checkbox" id="tColors"></label></div></div>
+      <div class="card">
+        <h2>Appearance</h2>
+        <div class="seg seg-icons" id="seg">
+          <button data-theme="system"><svg><use href="#i-auto"/></svg>System</button>
+          <button data-theme="light"><svg><use href="#i-sun"/></svg>Light</button>
+          <button data-theme="dark"><svg><use href="#i-moon"/></svg>Dark</button>
+        </div>
+        <div class="tg"><div class="grow">Use system colors<small id="colHint">Follow the system accent color. Off uses Y Connect blue.</small></div><label class="sw"><input type="checkbox" id="tColors"></label></div>
+      </div>
       <div class="card" id="startCard" style="display:none"><h2>Startup</h2>
-        <div class="tg"><div>Launch on startup<small>Starts with your computer when you log in, so sync works right away</small></div><label class="sw"><input type="checkbox" id="tStart"></label></div>
-        <div class="tg" id="startMode"><div>When it starts<small>Hide it in the tray, or open the window</small></div><div class="seg" id="segStart" style="margin:0"><button data-hidden="1">Hide in tray</button><button data-hidden="0">Show window</button></div></div>
-        <div class="hint hide" id="startErr" style="margin:8px 0 0"><span>⚠</span><div><b>Couldn’t change startup</b><br><span class="dim s" id="startWhy"></span></div></div></div>
+        <div class="tg"><span class="ti"><svg><use href="#i-power"/></svg></span><div class="grow">Launch on startup<small>Starts with your computer when you log in, so sync works right away</small></div><label class="sw"><input type="checkbox" id="tStart"></label></div>
+        <div class="tg" id="startMode"><div class="grow">When it starts<small>Hide it in the tray, or open the window</small></div><div class="seg" id="segStart"><button data-hidden="1">Hide in tray</button><button data-hidden="0">Show window</button></div></div>
+        <div class="hint hide" id="startErr"><svg><use href="#i-warn"/></svg><div><b>Couldn’t change startup</b><br><span class="dim s" id="startWhy"></span></div></div></div>
       <div class="card"><h2>This device</h2>
-        <label for="myName">Device name</label><input type="text" id="myName" maxlength="40">
+        <label for="myName">Device name</label>
+        <div class="field"><svg><use href="#i-laptop"/></svg><input type="text" id="myName" maxlength="40"></div>
         <label for="pass">Pairing code — use the same code on every device</label>
-        <div class="row"><input type="text" id="pass" maxlength="64" spellcheck="false"><button class="b ghost" id="btnGen">New</button></div>
-        <div class="btns"><button class="b" id="btnSave">Save</button></div></div>
-      <div class="card"><h2>About this device</h2>
-        <p class="dim s" style="margin:0 0 4px">Model, CPU and desktop details for bug reports. The report leaves out your device name, IP addresses, pairing code and the text of clipboard and notification entries.</p>
-        <div id="devInfo" class="dim s">Loading…</div>
-        <div class="btns"><button class="b" id="btnCopyDbg">Copy debug report</button><button class="b ghost" id="btnSaveDbg">Save as file…</button><button class="b ghost" id="btnRefDbg">Refresh</button></div></div>
+        <div class="row"><div class="field"><svg><use href="#i-key"/></svg><input type="text" id="pass" class="masked" maxlength="64" spellcheck="false" autocomplete="off"></div><button class="b ghost icon" id="btnCopyPass" title="Copy code"><svg><use href="#i-copy"/></svg></button><button class="b ghost" id="btnShowPass" aria-pressed="false">Show</button><button class="b ghost" id="btnGen"><svg><use href="#i-refresh"/></svg>New</button></div>
+        <div class="btns"><button class="b" id="btnSave"><svg><use href="#i-check"/></svg>Save changes</button></div></div>
       <div class="card"><h2>Network</h2><div class="ips" id="ipChips"></div></div>
-      <p class="dim s" style="text-align:center">Shortcuts: <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>7</kbd> switch pages · drop files anywhere to send · click a code or IP to copy it</p>
-      <footer>Version <span id="ver">Mitsuha_Miku_v1</span> · © 2026 Miku · MIT / GPL-3.0-or-later · TCP 48998 / UDP 48999</footer>
+      <div class="card" id="updCard"><h2>About &amp; updates</h2>
+        <div class="tg"><div class="grow"><span id="updTitle">Y Connect</span><small id="updStatus">Not checked yet</small></div><button class="b" id="btnUpd"><svg><use href="#i-refresh"/></svg><span>Check for updates</span></button></div>
+        <div class="hint hide" id="updNew"><svg><use href="#i-download"/></svg><div><b id="updNewTitle"></b><br><span class="dim s" id="updNotes"></span><div class="btns"><button class="b sm" id="btnUpdOpen"><svg><use href="#i-arrow"/></svg>Open download page</button></div></div></div>
+        <div class="tg"><span class="ti"><svg><use href="#i-bell"/></svg></span><div class="grow">Notify me about new releases<small>Checks GitHub about once a day and shows a notification. Off by default: this is the only thing in Y Connect that uses the internet.</small></div><label class="sw"><input type="checkbox" id="tUpd"></label></div>
+      </div>
+      <div class="card"><h2>This device</h2>
+        <div id="devInfo" class="dim s">Loading…</div>
+        <p class="dim s lead">Reporting a bug? The debug report adds more technical details. It never includes your device name, IP addresses, pairing code or the text of clipboard and notification entries.</p>
+        <div class="btns"><button class="b" id="btnCopyDbg"><svg><use href="#i-copy"/></svg>Copy debug report</button><button class="b ghost" id="btnSaveDbg">Save as file…</button></div></div>
+      <p class="dim s center">Shortcuts: <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>7</kbd> switch pages · <kbd>Ctrl</kbd>+<kbd>K</kbd> quick actions · drop files anywhere to send</p>
+      <footer>Version <span id="ver">v1.1</span> · © 2026 Yokeswaran N · GPL-3.0-or-later · TCP 48998 / UDP 48999</footer>
     </section>
+    </div>
   </main>
 </div>
-<div class="modal" id="mPair"><div class="dlg">
+
+<!-- pairing: our code is shown -->
+<div class="modal" id="mPair"><div class="dlg center">
+  <div class="orbit"><span class="o-ring"></span><span class="o-ring r2"></span><span class="o-core"><svg><use href="#i-key"/></svg></span></div>
   <h2 id="mpTitle">Pair</h2>
   <p class="dim" id="mpSub"></p>
-  <div class="code" id="mpCode"></div>
-  <p class="dim s">Waiting for the other device…</p>
-  <div class="btns"><button class="b ghost" id="mpCancel">Cancel</button></div>
+  <div class="code" id="mpCode" title="Click to copy"></div>
+  <p class="dim s"><span class="dots">Waiting for the other device</span></p>
+  <div class="btns j-center"><button class="b ghost" id="mpCancel">Cancel</button></div>
 </div></div>
-<div class="modal" id="mEnter"><div class="dlg">
+<!-- pairing: other device asks us to enter its code -->
+<div class="modal" id="mEnter"><div class="dlg center">
+  <div class="orbit sm"><span class="o-core"><svg><use href="#i-key"/></svg></span></div>
   <h2 id="meTitle">Enter pairing code</h2>
   <p class="dim" id="meSub"></p>
   <input type="text" id="enterCode" maxlength="64" spellcheck="false" autocomplete="off" placeholder="K7QM-2XPD">
   <p class="dim s">This replaces the pairing code of this device.</p>
-  <div class="btns"><button class="b" id="mePair">Pair</button><button class="b ghost" id="meCancel">Cancel</button></div>
+  <div class="btns j-center"><button class="b" id="mePair"><svg><use href="#i-check"/></svg>Pair</button><button class="b ghost" id="meCancel">Cancel</button></div>
 </div></div>
-<div class="dropall" id="dropAll"><div><b>Drop to send</b><span class="dim" id="dropTo"></span></div></div>
+<!-- command palette -->
+<div class="modal top-modal" id="mPal"><div class="pal">
+  <div class="pal-in"><svg><use href="#i-search"/></svg><input type="text" id="palIn" placeholder="Type a command or page…" spellcheck="false" autocomplete="off"><kbd>Esc</kbd></div>
+  <div class="pal-list" id="palList"></div>
+</div></div>
+
+<div class="dropall" id="dropAll"><div><svg><use href="#i-download"/></svg><b>Drop to send</b><span class="dim" id="dropTo"></span></div></div>
 <div class="toast" id="toast"></div>
 <script src="renderer.js"></script>
 </body>

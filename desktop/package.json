@@ -1,13 +1,13 @@
 {
-  "name": "miku-connect",
-  "version": "1.0.0",
-  "description": "Miku Connect - notification and clipboard sync between your devices over WLAN",
+  "name": "y-connect",
+  "version": "1.1.0",
+  "description": "Y Connect - notification, clipboard and file sync between your devices over WLAN",
   "main": "main.js",
-  "author": "Miku",
-  "license": "(MIT OR GPL-3.0-or-later)",
+  "author": "Yokeswaran N",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "start": "electron .",
-    "test": "node test/transfer.test.js",
+    "test": "node test/transfer.test.js && node test/updates.test.js",
     "dist:linux": "npx --yes electron-builder@^26.15.0 --linux AppImage",
     "dist:win": "npx --yes electron-builder@^26.15.0 --win nsis portable"
   },
@@ -18,8 +18,8 @@
     "electron": "^45.2.1"
   },
   "build": {
-    "appId": "com.mitsuha.miku.connect",
-    "productName": "Miku Connect",
+    "appId": "com.yokeswaran.yconnect",
+    "productName": "Y Connect",
     "files": [
       "main.js",
       "preload.js",
@@ -29,6 +29,8 @@
       "autostart.js",
       "deviceinfo.js",
       "latency.js",
+      "legacy.js",
+      "updates.js",
       "notifwatch.js",
       "renderer/**",
       "build/icon.png",
@@ -41,7 +43,7 @@
       "target": "AppImage",
       "category": "Utility",
       "icon": "build/icon.png",
-      "artifactName": "Miku-Connect-Mitsuha_Miku_v1.${ext}",
+      "artifactName": "Y-Connect-v1.1.${ext}",
       "syncDesktopName": true
     },
     "win": {
@@ -52,10 +54,10 @@
       "icon": "build/icon.png"
     },
     "nsis": {
-      "artifactName": "Miku-Connect-Setup-Mitsuha_Miku_v1.${ext}"
+      "artifactName": "Y-Connect-Setup-v1.1.${ext}"
     },
     "portable": {
-      "artifactName": "Miku-Connect-Portable-Mitsuha_Miku_v1.${ext}"
+      "artifactName": "Y-Connect-Portable-v1.1.${ext}"
     }
   },
   "engines": {
@@ -64,5 +66,5 @@
   "allowScripts": {
     "electron": true
   },
-  "desktopName": "miku-connect.desktop"
+  "desktopName": "y-connect.desktop"
 }

@@ -1,0 +1,16 @@
+# Node / Electron
+node_modules/
+desktop/dist/
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.iml
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

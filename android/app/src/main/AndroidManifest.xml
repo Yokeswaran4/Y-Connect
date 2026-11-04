@@ -12,12 +12,15 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <!-- lets the notification listener show real app names (sideloaded build, not for Play Store) -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!-- lets Y Connect offer to uninstall a leftover copy of the old app that was released under the previous name -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
     <application
         android:allowBackup="false"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.MikuConnect"
+        android:theme="@style/Theme.YConnect"
         android:usesCleartextTraffic="true">
 
         <activity
@@ -35,7 +38,7 @@
             android:name=".ClipboardSendActivity"
             android:exported="true"
             android:excludeFromRecents="true"
-            android:label="Miku Connect"
+            android:label="Y Connect"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
@@ -56,7 +59,7 @@
             android:foregroundServiceType="connectedDevice" />
 
         <service
-            android:name=".MikuNotificationListener"
+            android:name=".YConnectNotificationListener"
             android:exported="true"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">

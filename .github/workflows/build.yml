@@ -1,4 +1,4 @@
-name: Build Miku Connect
+name: Build Y Connect
 on:
   push:
   workflow_dispatch:
@@ -18,13 +18,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.9
-      - name: Build debug APK
+      - name: Build release APK
         working-directory: android
-        run: gradle assembleDebug --no-daemon
+        run: gradle assembleRelease --no-daemon
       - uses: actions/upload-artifact@v4
         with:
-          name: MikuConnect-Android-APK
-          path: android/app/build/outputs/apk/debug/*.apk
+          name: YConnect-Android-APK
+          path: android/app/build/outputs/apk/release/*.apk
   linux:
     runs-on: ubuntu-latest
     steps:
@@ -39,7 +39,7 @@ jobs:
           npm run dist:linux
       - uses: actions/upload-artifact@v4
         with:
-          name: MikuConnect-Linux
+          name: YConnect-Linux
           path: desktop/dist/*.AppImage
   windows:
     runs-on: windows-latest
@@ -56,5 +56,5 @@ jobs:
           npm run dist:win
       - uses: actions/upload-artifact@v4
         with:
-          name: MikuConnect-Windows
+          name: YConnect-Windows
           path: desktop/dist/*.exe

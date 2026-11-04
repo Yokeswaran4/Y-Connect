@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT OR GPL-3.0-or-later
-// Copyright (c) 2026 Miku
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Yokeswaran N
 'use strict';
 // Reads this computer's battery: { level: 0-100, charging: bool }, or null when there is no battery (desktop PC).
 // Linux: /sys/class/power_supply. Windows: Win32_Battery through PowerShell (one short call a minute).

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT OR GPL-3.0-or-later
-// Copyright (c) 2026 Miku
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (c) 2026 Yokeswaran N
 'use strict';
 // Loopback test for transfer.js (no Electron, no network): two instances talk through in-memory sockets.
 //   node test/transfer.test.js
@@ -10,7 +10,7 @@ const path = require('path');
 const crypto = require('crypto');
 const assert = require('assert');
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'miku-tt-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'yconnect-tt-'));
 let currentDownloads = null;
 const handlers = new Map();
 const electronMock = {
@@ -95,8 +95,8 @@ const states = (n) => n.mod.list().map((t) => t.status);
     const f = path.join(tmp, 'one.bin'); fs.writeFileSync(f, crypto.randomBytes(3 * 1024 * 1024 + 123));
     await as(A, () => A.mod.sendFile('B1', f));
     await until(() => states(B).includes('done'));
-    assert.strictEqual(sha(path.join(B.dl, 'MikuConnect', 'one.bin')), sha(f));
-    assert.deepStrictEqual(fs.readdirSync(path.join(B.dl, 'MikuConnect', '.partial')), []);
+    assert.strictEqual(sha(path.join(B.dl, 'YConnect', 'one.bin')), sha(f));
+    assert.deepStrictEqual(fs.readdirSync(path.join(B.dl, 'YConnect', '.partial')), []);
     ok('single file arrives bit-for-bit and .partial is empty');
   }
 
@@ -113,7 +113,7 @@ const states = (n) => n.mod.list().map((t) => t.status);
     try { fs.symlinkSync('/etc', path.join(root, 'link')); } catch {}
     as(A, () => A.mod.sendMany('B2', [root]));
     await until(() => states(B).filter((s) => s === 'done').length === 4);
-    assert.deepStrictEqual(tree(path.join(B.dl, 'MikuConnect', 'Photos')), tree(root));
+    assert.deepStrictEqual(tree(path.join(B.dl, 'YConnect', 'Photos')), tree(root));
     ok('folder arrives with the same structure and contents (symlink skipped)');
   }
 
@@ -127,11 +127,11 @@ const states = (n) => n.mod.list().map((t) => t.status);
       await until(() => B.mod.list().filter((t) => t.status === 'done').length > before - 0 && B.mod.list().length > before);
     }
     await sleep(100);
-    const inside = tree(path.join(B.dl, 'MikuConnect'));
+    const inside = tree(path.join(B.dl, 'YConnect'));
     assert.strictEqual(Object.keys(inside).length, 5, JSON.stringify(inside));
     assert(!fs.existsSync(path.join(B.dl, 'evil.txt')) && !fs.existsSync(path.join(tmp, 'evil.txt.x')));
     assert(!fs.existsSync('/etc/evil.txt'));
-    ok('hostile folder paths cannot escape Downloads/MikuConnect');
+    ok('hostile folder paths cannot escape Downloads/YConnect');
   }
 
   // 4. resume after the connection drops in the middle
@@ -144,18 +144,18 @@ const states = (n) => n.mod.list().map((t) => t.status);
     c1.cut();
     await sleep(150);
     assert(A.logs.some((l) => l.includes('Transfer paused')), 'sender queued the file for later');
-    const partDir = path.join(B.dl, 'MikuConnect', '.partial');
+    const partDir = path.join(B.dl, 'YConnect', '.partial');
     const parts = fs.readdirSync(partDir).filter((x) => x.endsWith('.part'));
     assert.strictEqual(parts.length, 1, 'partial file kept');
     const had = fs.statSync(path.join(partDir, parts[0])).size;
     assert(had > 0 && had < size, 'partial is a real prefix: ' + had);
-    assert(!fs.existsSync(path.join(B.dl, 'MikuConnect', 'big.bin')), 'no final file yet');
+    assert(!fs.existsSync(path.join(B.dl, 'YConnect', 'big.bin')), 'no final file yet');
     const before = B.bytesIn;
     connect(A, B);
     as(A, () => A.mod.onPeerConnected('B4'));
     await until(() => states(B).includes('done'));
     const resent = B.bytesIn - before;
-    assert.strictEqual(sha(path.join(B.dl, 'MikuConnect', 'big.bin')), sha(f));
+    assert.strictEqual(sha(path.join(B.dl, 'YConnect', 'big.bin')), sha(f));
     assert(resent <= size - had + 64 * 1024, `only the missing part is sent (resent ${resent}, missing ${size - had})`);
     assert(resent < size * 0.9, 'much less than the whole file');
     assert.deepStrictEqual(fs.readdirSync(partDir), []);
@@ -173,8 +173,8 @@ const states = (n) => n.mod.list().map((t) => t.status);
     await sleep(200);
     connect(A, B);
     as(A, () => A.mod.onPeerConnected('B5'));
-    await until(() => Object.keys(tree(path.join(B.dl, 'MikuConnect', 'Docs'))).length === 6 && states(B).filter((s) => s === 'active').length === 0);
-    assert.deepStrictEqual(tree(path.join(B.dl, 'MikuConnect', 'Docs')), tree(root));
+    await until(() => Object.keys(tree(path.join(B.dl, 'YConnect', 'Docs'))).length === 6 && states(B).filter((s) => s === 'active').length === 0);
+    assert.deepStrictEqual(tree(path.join(B.dl, 'YConnect', 'Docs')), tree(root));
     ok('interrupted folder: all 6 files complete after reconnect');
   }
 
@@ -186,7 +186,7 @@ const states = (n) => n.mod.list().map((t) => t.status);
     await until(() => B.bytesIn > 2 * 1024 * 1024);
     as(A, () => A.mod.cancel(A.mod.list()[0].id));
     await p; await sleep(300);
-    const d = path.join(B.dl, 'MikuConnect');
+    const d = path.join(B.dl, 'YConnect');
     assert.deepStrictEqual(fs.readdirSync(path.join(d, '.partial')), []);
     assert(!fs.existsSync(path.join(d, 'c.bin')));
     ok('cancel removes the partial file');
@@ -202,7 +202,7 @@ const states = (n) => n.mod.list().map((t) => t.status);
     as(B, () => B.mod.onBinary(wsB, Buffer.concat([Buffer.from([0, 0, 0, 77]), Buffer.from('legacy')])));
     as(B, () => B.mod.onMessage(wsB, { type: 'file-end', tid: 77 }));
     await until(() => states(B).includes('done'));
-    assert.strictEqual(fs.readFileSync(path.join(B.dl, 'MikuConnect', 'legacy.txt'), 'utf8'), 'legacy');
+    assert.strictEqual(fs.readFileSync(path.join(B.dl, 'YConnect', 'legacy.txt'), 'utf8'), 'legacy');
     B.accept = false;
     const r = await as(A, () => A.mod.sendFile('B7', f));
     assert.strictEqual(r, 'rejected');
