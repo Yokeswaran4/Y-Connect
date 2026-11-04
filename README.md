@@ -27,27 +27,26 @@ If you find an issue, feel free to contact me on [Discord](https://discord.com/u
 1. [What's new](#whats-new)
 2. [Overview](#overview)
 3. [Features](#features)
-4. [Screenshots](#screenshots)
-5. [Downloads](#downloads)
-6. [Requirements](#requirements)
-7. [Building from source](#building-from-source)
-8. [Pairing your devices](#pairing-your-devices)
-9. [Android one-time setup](#android-one-time-setup)
-10. [Using the app](#using-the-app)
-11. [File transfer](#file-transfer)
-12. [Battery and connection latency](#battery-and-connection-latency)
-13. [Remote commands](#remote-commands)
-14. [Security and privacy](#security-and-privacy)
-15. [Network and firewall](#network-and-firewall)
-16. [Protocol reference](#protocol-reference)
-17. [Settings and configuration](#settings-and-configuration)
-18. [Troubleshooting](#troubleshooting)
-19. [Theming](#theming)
-20. [Project structure](#project-structure)
-21. [Tech stack and credits](#tech-stack-and-credits)
-22. [Made with AI](#made-with-ai)
-23. [License](#license)
-24. [Contact](#contact)
+4. [Downloads](#downloads)
+5. [Requirements](#requirements)
+6. [Building from source](#building-from-source)
+7. [Pairing your devices](#pairing-your-devices)
+8. [Android one-time setup](#android-one-time-setup)
+9. [Using the app](#using-the-app)
+10. [File transfer](#file-transfer)
+11. [Battery and connection latency](#battery-and-connection-latency)
+12. [Remote commands](#remote-commands)
+13. [Security and privacy](#security-and-privacy)
+14. [Network and firewall](#network-and-firewall)
+15. [Protocol reference](#protocol-reference)
+16. [Settings and configuration](#settings-and-configuration)
+17. [Troubleshooting](#troubleshooting)
+18. [Theming](#theming)
+19. [Project structure](#project-structure)
+20. [Tech stack and credits](#tech-stack-and-credits)
+21. [Made with AI](#made-with-ai)
+22. [License](#license)
+23. [Contact](#contact)
 
 ---
 
@@ -81,21 +80,6 @@ Y Connect links Android phones, Linux computers and Windows computers on the sam
 | Battery and latency | See connected devices' battery status and encrypted-link latency. |
 | Remote commands | Run commands from Android on a paired Linux or Windows computer. This is off by default. |
 | Privacy | No cloud service, relay, or account is required. |
-
-## Screenshots
-
-The sample screenshots below are included in the repository under [`assets/`](assets/).
-
-<details>
-<summary>Show Android and desktop screenshots</summary>
-
-| Android | Desktop |
-|---|---|
-| <img src="assets/android/1.jpg" alt="Android Devices screen showing discovery and pairing" width="240"> | <img src="assets/arch/1.png" alt="Desktop Devices screen showing nearby devices" width="480"> |
-| <img src="assets/android/2.jpg" alt="Android connected-device card with latency details" width="240"> | <img src="assets/arch/3.png" alt="Desktop Devices screen with a connected Android device" width="480"> |
-| <img src="assets/android/3.jpg" alt="Android file transfer screen" width="240"> | <img src="assets/arch/2.png" alt="Desktop nearby device and Connect by IP panels" width="480"> |
-
-</details>
 
 ## Downloads
 
@@ -428,7 +412,7 @@ Y-Connect/
 ├── README.md                       This documentation
 ├── LICENSE                         GNU General Public License v3
 ├── THIRD-PARTY-NOTICES.txt         Licenses of the components Y Connect uses
-├── assets/                         Logo and sample screenshots used in this README
+├── assets/                         Project logo
 ├── .github/workflows/build.yml     CI build for Android, Linux and Windows
 │
 ├── desktop/                        Electron app (Linux and Windows)
