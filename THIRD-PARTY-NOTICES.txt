@@ -13,6 +13,12 @@ ws (WebSocket) ....... MIT ........ (c) Einar Otto Stangvik, Arnout Kazemier, Lu
                                     https://github.com/websockets/ws
 electron-builder ..... MIT ........ build tool only, not shipped inside the app
                                     https://www.electron.build
+scrcpy-server ........ Apache-2.0 .. (c) Genymobile / Romain Vimont and scrcpy contributors
+                                    https://github.com/Genymobile/scrcpy
+                                    v3.3.3, bundled unmodified in desktop/vendor/. Pushed to a phone over adb
+                                    only when you press Control in the screen viewer, to inject touch and key input.
+adb (Android platform-tools)
+                       Apache-2.0 .. (c) The Android Open Source Project. Not bundled; the copy you installed is used.
 dbus-monitor (D-Bus) . AFL-2.1 or GPL-2.0-or-later. Optional external tool used on Linux to read
                                     desktop notifications. It is not bundled; the system's copy is used.
 

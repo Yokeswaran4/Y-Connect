@@ -12,8 +12,8 @@ android {
         applicationId = "com.yokeswaran.yconnect"
         minSdk = 29
         targetSdk = 35
-        versionCode = 4
-        versionName = "v1.2"
+        versionCode = 5
+        versionName = "v2.0"
     }
 
     buildTypes {

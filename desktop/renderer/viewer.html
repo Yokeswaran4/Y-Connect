@@ -1,0 +1,49 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src blob: data:">
+<title>Y Connect screen</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .bar { position: fixed; top: 8px; right: 8px; display: flex; gap: 6px; align-items: center; }
+  .bar button { padding: 6px 12px; border: 0; border-radius: 16px; background: rgba(40,40,40,.75); color: #fff; font: 13px system-ui, sans-serif; cursor: pointer; opacity: .55; }
+  .bar button:hover, .bar button.on { opacity: 1; } .bar button.on { background: #1e88e5; } .bar [hidden] { display: none; }
+  #tag { color: #fff; font: 12px system-ui, sans-serif; background: rgba(40,40,40,.6); padding: 4px 9px; border-radius: 12px; opacity: .8; }
+  #nav { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+  #nav button { width: 54px; padding: 6px 0; border: 0; border-radius: 16px; background: rgba(40,40,40,.75); color: #fff; font: 15px system-ui, sans-serif; cursor: pointer; opacity: .5; }
+  #nav button:hover { opacity: 1; } #nav[hidden] { display: none; }
+  #wait { position: fixed; inset: 0; display: grid; place-items: center; color: #aaa; font: 14px system-ui, sans-serif; pointer-events: none; }
+  #setup { position: fixed; inset: 0; background: rgba(0,0,0,.82); display: grid; place-items: center; font: 13px/1.45 system-ui, sans-serif; color: #e8e8e8; overflow: auto; }
+  #setup[hidden] { display: none; }
+  #setup .box { width: min(400px, 92vw); background: #1b1b1d; border-radius: 14px; padding: 18px; box-sizing: border-box; }
+  #setup h3 { margin: 0 0 6px; font-size: 16px; }
+  #setup ol { margin: 8px 0 12px; padding-left: 20px; color: #bbb; }
+  #setup input { width: 100%; box-sizing: border-box; margin: 3px 0 8px; padding: 8px 10px; border-radius: 8px; border: 1px solid #444; background: #101012; color: #fff; font: 13px ui-monospace, monospace; }
+  #setup label { color: #9a9a9a; font-size: 12px; }
+  #setup .row { display: flex; gap: 8px; margin-top: 4px; }
+  #setup button { flex: 1; padding: 8px; border: 0; border-radius: 8px; background: #1e88e5; color: #fff; font: 13px system-ui, sans-serif; cursor: pointer; }
+  #setup button.ghost { background: #333; } #setup button:disabled { opacity: .5; cursor: default; }
+  #msg { min-height: 18px; margin: 6px 0 0; color: #ff8a80; word-break: break-word; } #msg.ok { color: #81c784; }
+  #setup small { color: #888; }
+</style></head>
+<body><canvas id="c"></canvas>
+<div class="bar"><span id="tag" hidden></span><button id="adbsetup" hidden title="Pair this computer with the phone (Wireless debugging)">ADB setup</button><button id="ctl" hidden>Control</button></div>
+<div id="nav" hidden><button data-a="back" title="Back (right click)">◁</button><button data-a="home" title="Home (Windows key)">○</button><button data-a="recents" title="Recent apps">□</button></div>
+<div id="wait">Waiting for the first picture…</div>
+<div id="setup" hidden><div class="box">
+  <h3>Control this phone with ADB</h3>
+  <div id="why" style="color:#bbb"></div>
+  <ol>
+    <li>On the phone: <b>Settings → Developer options → Wireless debugging</b> → turn it on.</li>
+    <li>Tap <b>Pair device with pairing code</b>. Enter the address and 6-digit code it shows below (it is filled in when found).</li>
+    <li>Press <b>Pair &amp; control</b>. You only do this once per computer.</li>
+  </ol>
+  <label>Pairing address (ip:port)</label><input id="pairHost" placeholder="192.168.1.20:37123" spellcheck="false" autocomplete="off">
+  <label>Pairing code</label><input id="pairCode" placeholder="123456" inputmode="numeric" maxlength="6" autocomplete="off">
+  <div class="row"><button id="doPair">Pair &amp; control</button></div>
+  <label style="display:block;margin-top:10px">Already paired? Wireless debugging address (ip:port) or leave empty to find it</label><input id="connHost" placeholder="192.168.1.20:41234" spellcheck="false" autocomplete="off">
+  <div class="row"><button id="doConnect" class="ghost">Connect</button><button id="doClose" class="ghost">Close</button></div>
+  <div id="msg"></div>
+  <small>Needs <code>adb</code> (Android platform-tools) on this computer. Over USB: enable USB debugging and plug the phone in, then press Connect.</small>
+</div></div>
+<script src="viewer.js"></script></body></html>

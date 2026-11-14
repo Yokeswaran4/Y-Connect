@@ -39,7 +39,7 @@ function makeNode(name) {
   mod.init({
     peers: node.peers,
     sendTo: (ws, obj) => ws.deliver(obj),
-    encryptBin: (b) => b,
+    encryptBin: (b) => Buffer.from(b), // like the real cipher: output is a fresh buffer, the sender reuses its read buffer
     getConfig: () => ({ id: name, acceptFiles: node.accept !== false }),
     addLog: (k, t, x) => node.logs.push(`${k}|${t}|${x || ''}`),
     pushState: () => {}, getWin: () => null, icon: '',
@@ -59,11 +59,11 @@ function connect(a, b) { // a <-> b, a's socket is wsA, b's socket is wsB
     const step = () => {
       const job = from.q.shift();
       if (!job) { from.busy = false; return; }
-      setTimeout(() => {
+      setTimeout(() => {   // about 64 KiB per ms whatever the frame size, so the tests' timing does not depend on CHUNK
         from.bufferedAmount -= job.len;
         if (from.readyState === 1 && to.readyState === 1) as(toNode, () => job.run());
         step();
-      }, 1);
+      }, Math.max(1, Math.round(job.len / 65536)));
     };
     step();
   };

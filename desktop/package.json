@@ -1,13 +1,13 @@
 {
   "name": "y-connect",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Y Connect - notification, clipboard and file sync between your devices over WLAN",
   "main": "main.js",
   "author": "Yokeswaran N",
   "license": "GPL-3.0-or-later",
   "scripts": {
     "start": "electron .",
-    "test": "node test/paircrypto.test.js && node test/storage.test.js && node test/terminal.test.js && node test/transfer.test.js && node test/updates.test.js",
+    "test": "node test/paircrypto.test.js && node test/storage.test.js && node test/terminal.test.js && node test/transfer.test.js && node test/screen.test.js && node test/updates.test.js && node test/inputctl.test.js && node test/adbctl.test.js",
     "dist:linux": "npx --yes electron-builder@^26.15.0 --linux AppImage",
     "dist:win": "npx --yes electron-builder@^26.15.0 --win nsis portable"
   },
@@ -24,6 +24,9 @@
       "main.js",
       "preload.js",
       "transfer.js",
+      "screen.js",
+      "capture-preload.js",
+      "viewer-preload.js",
       "remote.js",
       "storage.js",
       "battery.js",
@@ -36,7 +39,10 @@
       "notifwatch.js",
       "renderer/**",
       "build/icon.png",
-      "licenses/**"
+      "licenses/**",
+      "adbctl.js",
+      "inputctl.js",
+      "vendor/**"
     ],
     "directories": {
       "buildResources": "build"
@@ -45,7 +51,7 @@
       "target": "AppImage",
       "category": "Utility",
       "icon": "build/icon.png",
-      "artifactName": "Y-Connect-v1.2.${ext}",
+      "artifactName": "Y-Connect-v2.0.${ext}",
       "syncDesktopName": true
     },
     "win": {
@@ -56,11 +62,14 @@
       "icon": "build/icon.png"
     },
     "nsis": {
-      "artifactName": "Y-Connect-Setup-v1.2.${ext}"
+      "artifactName": "Y-Connect-Setup-v2.0.${ext}"
     },
     "portable": {
-      "artifactName": "Y-Connect-Portable-v1.2.${ext}"
-    }
+      "artifactName": "Y-Connect-Portable-v2.0.${ext}"
+    },
+    "asarUnpack": [
+      "vendor/**"
+    ]
   },
   "engines": {
     "node": ">=20"

@@ -22,6 +22,7 @@
   <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M9 20h6M12 16v4"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></symbol>
   <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6.500A1.500 1.500 0 0 1 4.500 5H9l2 2.500h8.500A1.500 1.500 0 0 1 21 9v9a1.500 1.500 0 0 1-1.500 1.500h-15A1.500 1.500 0 0 1 3 18z"/></symbol>
+  <symbol id="i-screen" viewBox="0 0 24 24"><rect x="3" y="4.500" width="18" height="12" rx="1.500"/><path d="M8 20h8M12 16.500V20"/></symbol>
   <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10.500 13.500M21 3l-6.500 18-4-7.500L3 9.500z"/></symbol>
   <symbol id="i-unlink" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.600 0l3-3a4 4 0 0 0-5.600-5.600L12 6.400M14 10a4 4 0 0 0-5.600 0l-3 3a4 4 0 0 0 5.600 5.600l1-1M4 4l16 16"/></symbol>
   <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4.500 13.500H11L10 22l8.500-11.500H12z"/></symbol>
@@ -133,6 +134,7 @@
         <h2><svg><use href="#i-terminal"/></svg>Remote control from your phone</h2>
         <p class="dim s lead">Lets a paired Android phone run commands on this computer. It is <b>off by default</b>. Commands never run with sudo / administrator rights, and deleting files (rm, del, Remove-Item …) is always refused. Only phones you have paired can ask.</p>
         <div class="tg"><span class="ti warn"><svg><use href="#i-shield"/></svg></span><div class="grow">Allow commands from phone<small>Runs as your normal user; stops after at most 2 minutes</small></div><label class="sw"><input type="checkbox" id="tCmd"></label></div>
+        <div class="tg"><span class="ti warn"><svg><use href="#i-shield"/></svg></span><div class="grow">Allow remote control of shared screen<small>The device viewing your screen can move the mouse and type. Needs xdotool or ydotool on Linux</small></div><label class="sw"><input type="checkbox" id="tCtl"></label></div>
       </div>
     </section>
 
@@ -180,6 +182,12 @@
         <label for="myName">Device name</label>
         <div class="field"><svg><use href="#i-laptop"/></svg><input type="text" id="myName" maxlength="40"></div>
         <div class="btns"><button class="b" id="btnSave"><svg><use href="#i-check"/></svg>Save changes</button></div></div>
+      <div class="card"><h2><svg><use href="#i-screen"/></svg>Control a phone (ADB)</h2>
+        <p class="dim s lead">While you watch a phone's screen, <b>Control</b> in the viewer window lets you tap, drag, scroll and type on it from this computer. It uses <b>adb</b> and the phone's <b>Wireless debugging</b> (or USB debugging), so you pair this computer once in the phone's Developer options. Nothing goes through Y Connect and the phone owner stays in charge: switching Wireless debugging off ends control.</p>
+        <div class="hint" id="adbState"><svg><use href="#i-shield"/></svg><div class="dim s" id="adbWhy">Checking…</div></div>
+        <label for="adbPath">adb location (optional)</label>
+        <div class="field"><svg><use href="#i-terminal"/></svg><input type="text" id="adbPath" placeholder="Leave empty to find adb automatically" spellcheck="false"></div>
+        <div class="btns"><button class="b" id="btnAdb"><svg><use href="#i-check"/></svg>Save &amp; check</button></div></div>
       <div class="card"><h2>Network</h2><div class="ips" id="ipChips"></div></div>
       <div class="card" id="updCard"><h2>About &amp; updates</h2>
         <div class="tg"><div class="grow"><span id="updTitle">Y Connect</span><small id="updStatus">Not checked yet</small></div><button class="b" id="btnUpd"><svg><use href="#i-refresh"/></svg><span>Check for updates</span></button></div>
@@ -191,7 +199,7 @@
         <p class="dim s lead">Reporting a bug? The debug report adds more technical details. It never includes your device name, IP addresses, pairing code or the text of clipboard and notification entries.</p>
         <div class="btns"><button class="b" id="btnCopyDbg"><svg><use href="#i-copy"/></svg>Copy debug report</button><button class="b ghost" id="btnSaveDbg">Save as file…</button></div></div>
       <p class="dim s center">Shortcuts: <kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>7</kbd> switch pages · <kbd>Ctrl</kbd>+<kbd>K</kbd> quick actions · drop files anywhere to send</p>
-      <footer>Version <span id="ver">v1.2</span> · © 2026 Yokeswaran N · GPL-3.0-or-later · TCP 48998 / UDP 48999</footer>
+      <footer>Version <span id="ver">v2.0</span> · © 2026 Yokeswaran N · GPL-3.0-or-later · TCP 48998 / UDP 48999</footer>
     </section>
     </div>
   </main>

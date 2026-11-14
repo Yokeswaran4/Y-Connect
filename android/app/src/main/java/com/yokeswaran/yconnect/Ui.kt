@@ -608,7 +608,7 @@ private fun CatNavBar(items: List<Triple<String, ImageVector, Int>>, selected: I
 
 // ---------- app shell ----------
 @Composable
-fun YConnectApp(notifAccess: Boolean, onSendFiles: (String) -> Unit, onSendFolder: (String) -> Unit) {
+fun YConnectApp(notifAccess: Boolean, onSendFiles: (String) -> Unit, onSendFolder: (String) -> Unit, onShareScreen: (String) -> Unit) {
     val cs = MaterialTheme.colorScheme
     val peers by Hub.peers.collectAsState()
     val ctx = LocalContext.current
@@ -665,7 +665,7 @@ fun YConnectApp(notifAccess: Boolean, onSendFiles: (String) -> Unit, onSendFolde
                         label = "tabs"
                     ) { t ->
                         when (t) {
-                            0 -> DevicesPage(pagePad, onSendFiles, onSendFolder)
+                            0 -> DevicesPage(pagePad, onSendFiles, onSendFolder, onShareScreen)
                             1 -> FilesPage(pagePad)
                             2 -> RunPage(pagePad)
                             3 -> ActivityPage(pagePad)
@@ -681,7 +681,8 @@ fun YConnectApp(notifAccess: Boolean, onSendFiles: (String) -> Unit, onSendFolde
 
 // ---------- pages ----------
 @Composable
-private fun DevicesPage(pad: PaddingValues, onSendFiles: (String) -> Unit, onSendFolder: (String) -> Unit) {
+private fun DevicesPage(pad: PaddingValues, onSendFiles: (String) -> Unit, onSendFolder: (String) -> Unit, onShareScreen: (String) -> Unit) {
+    val screenState by Screen.state.collectAsState()
     val cs = MaterialTheme.colorScheme
     val peers by Hub.peers.collectAsState()
     val ips by Hub.localIps.collectAsState()
@@ -768,6 +769,11 @@ private fun DevicesPage(pad: PaddingValues, onSendFiles: (String) -> Unit, onSen
                         Icon(FolderIcon, null, Modifier.size(17.dp))
                         Spacer(Modifier.width(6.dp))
                         Text("Folder", maxLines = 1)
+                    }
+                    val screenSrc = remember { MutableInteractionSource() }
+                    val sharingHere = screenState.sharingTo == p.id
+                    OutlinedButton(onClick = { onShareScreen(p.id) }, interactionSource = screenSrc, modifier = Modifier.weight(1f).pressScale(screenSrc), shape = RoundedCornerShape(14.dp)) {
+                        Text(if (sharingHere) "Stop" else "Screen", maxLines = 1, color = if (sharingHere) cs.error else Color.Unspecified)
                     }
                     IconButton(onClick = { unpairTarget = p }) { Icon(UnlinkIcon, "Unpair ${p.name}", tint = cs.error) }
                 }
@@ -1032,6 +1038,24 @@ private fun SettingsPage(pad: PaddingValues, notifAccess: Boolean) {
                 }
                 SettingRow(FolderIcon, "Allow changes", "Let the computer also write, rename and delete files. Off = read only.", s.storageWrite) { Hub.updateSettings(s.copy(storageWrite = it)) }
                 Dim("On the computer open Devices and press “Mount storage” on this phone. Traffic stays encrypted with this pair's key.")
+            }
+        } }
+        Deferred(2) { Card("Remote control", enterIndex = 0) {
+            var svcOn by remember { mutableStateOf(RemoteControlService.instance != null) }
+            LaunchedEffect(Unit) { while (true) { svcOn = RemoteControlService.instance != null; delay(1000) } }
+            SettingRow(MonitorIcon, "Allow remote control", "When you share this screen, the device watching it can tap, swipe and type here. Off by default.", s.allowControl) { Hub.updateSettings(s.copy(allowControl = it)) }
+            if (s.allowControl) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Accessibility service", fontWeight = FontWeight.SemiBold)
+                        Dim(if (svcOn) "On." else "Android needs it switched on under Accessibility > Y Connect remote control.")
+                    }
+                    if (svcOn) Pill("On", OkGreen)
+                    else Button(onClick = {
+                        try { ctx.startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) {}
+                    }, shape = RoundedCornerShape(12.dp)) { Text("Open") }
+                }
+                Dim("Control only works while you are sharing your screen, and you can stop it any time from the notification. Y Connect does not read what is on your screen with this service.")
             }
         } }
         Deferred(2) { Card("Permissions", enterIndex = 0) {

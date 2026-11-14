@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Y Connect — Android, Linux and Windows in sync</title>
   <meta name="description"
-    content="Sync notifications, clipboard and files between your Android phone and your Linux or Windows computer over your local network. No cloud. No account.">
+    content="Sync notifications, clipboard and files, and share screens, between your Android phone and your Linux or Windows computer over your local network. No cloud. No account.">
   <meta property="og:title" content="Y Connect">
   <meta property="og:description"
     content="Keep your Android phone and your Linux or Windows computer in sync. No cloud. No account.">
@@ -1453,6 +1453,38 @@
       border-color: var(--fa)
     }
 
+
+    /* screen sharing preview in the demo */
+    .scr { background: var(--fc); border-radius: var(--kr); padding: 12px; margin-bottom: 10px }
+    .scr-h { display: flex; align-items: center; gap: 8px; font-size: 12.5px; margin-bottom: 10px }
+    .scr-h small { margin-left: auto; color: var(--fd) }
+    .scr-h .live { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: blink 1.2s ease-in-out infinite }
+    @keyframes blink { 50% { opacity: .25 } }
+    .scr-v { position: relative; overflow: hidden; margin: 0 auto; border-radius: 10px; border: 1px solid var(--line2);
+      background: color-mix(in srgb, var(--fa) 10%, #0b0e16) }
+    .scr-v.pc { width: 100%; aspect-ratio: 16/10; max-height: 230px }
+    .scr-v.ph { height: 250px; aspect-ratio: 9/19; border-radius: 18px; border-width: 3px }
+    .mk-bar { height: 12%; background: rgba(255, 255, 255, .08); display: flex; align-items: center; gap: 4px; padding: 0 8px }
+    .mk-bar i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .35) }
+    .mk-win { position: absolute; left: 8%; right: 8%; top: 22%; bottom: 10%; border-radius: 6px; background: rgba(255, 255, 255, .07); padding: 10px; display: grid; gap: 7px; align-content: start }
+    .mk-win b { display: block; height: 7px; border-radius: 4px; background: var(--fa); opacity: .55; animation: shim 2.4s ease-in-out infinite }
+    .mk-win b:nth-child(2) { width: 70%; animation-delay: .3s; background: #fff; opacity: .25 }
+    .mk-win b:nth-child(3) { width: 85%; animation-delay: .6s; background: #fff; opacity: .2 }
+    .mk-win b:nth-child(4) { width: 45%; animation-delay: .9s }
+    @keyframes shim { 50% { transform: scaleX(.82); transform-origin: left } }
+    .mk-cur { position: absolute; width: 10px; height: 10px; border-left: 10px solid #fff; border-top: 7px solid transparent; border-bottom: 7px solid transparent; transform: rotate(-30deg); filter: drop-shadow(0 1px 2px #000); animation: curs 6s ease-in-out infinite }
+    @keyframes curs { 0% { left: 20%; top: 70% } 30% { left: 60%; top: 35% } 60% { left: 40%; top: 55% } 100% { left: 20%; top: 70% } }
+    .mk-st { height: 6%; margin: 4% 8% 0; display: flex; justify-content: space-between; font-size: 9px; color: rgba(255, 255, 255, .7) }
+    .mk-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 8px; padding: 10% 8% }
+    .mk-grid i { aspect-ratio: 1; border-radius: 28%; background: var(--fa); opacity: .55; animation: pulse 3s ease-in-out infinite }
+    .mk-grid i:nth-child(3n) { background: #fff; opacity: .25 }
+    .mk-grid i:nth-child(2n) { animation-delay: .8s }
+    .mk-grid i:nth-child(5n) { animation-delay: 1.6s }
+    @keyframes pulse { 50% { opacity: .9 } }
+    .mk-pill { position: absolute; bottom: 3%; left: 50%; width: 34%; height: 4px; margin-left: -17%; border-radius: 4px; background: rgba(255, 255, 255, .5) }
+    .mk-note { position: absolute; top: 9%; left: 6%; right: 6%; height: 9%; border-radius: 8px; background: rgba(255, 255, 255, .2); animation: drop 6s ease-in-out infinite }
+    @keyframes drop { 0%, 55% { transform: translateY(-160%) } 62%, 85% { transform: none } 100% { transform: translateY(-160%) } }
+
     .rad {
       display: flex;
       align-items: center;
@@ -2047,6 +2079,11 @@
         <path
           d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
       </symbol>
+      <symbol id="i-screen" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="12" rx="2" />
+        <path d="M8 20h8" />
+        <path d="M12 16v4" />
+      </symbol>
       <symbol id="i-run" viewBox="0 0 24 24">
         <path d="m4 17 6-6-6-6" />
         <path d="M12 19h8" />
@@ -2119,7 +2156,7 @@
 
   <header class="w hero" id="top">
     <div>
-      <span class="pill"><i></i><span id="pillV">v1.2</span> · GPL-3.0-or-later · No cloud, no account</span>
+      <span class="pill"><i></i><span id="pillV">v2.0</span> · GPL-3.0-or-later · No cloud, no account</span>
       <h1>Your phone and computer, <span class="gr">finally in sync.</span></h1>
       <p class="lead">Y Connect links your Android phone with your Linux or Windows computer over your local network.
         Share notifications, clipboard and files, with everything encrypted and staying on your Wi‑Fi.</p>
@@ -2199,7 +2236,25 @@
           <p>Send anything in either direction with progress, cancel, safe filenames and automatic resume after a
             dropped connection.</p>
           <p class="more">Folders are sent too. Every transfer can be cancelled, filenames are made safe, and an
-            interrupted transfer continues on its own or with Resume. Received files go to Downloads/YConnect.</p><span
+            interrupted transfer continues on its own or with Resume. Received files go to Downloads/YConnect. Data travels
+            in large encrypted chunks and is buffered on the receiving side, so big files move at close to your
+            network’s speed.</p><span
+            class="tgl">More<svg>
+              <use href="#i-chev" />
+            </svg></span>
+        </div>
+        <div class="fc" role="button" tabindex="0" aria-expanded="false">
+          <div class="ic"><svg>
+              <use href="#i-screen" />
+            </svg></div>
+          <h3>Screen sharing</h3>
+          <p>Show your computer’s screen on your phone, or your phone’s screen on your computer. View only, over the same
+            encrypted link.</p>
+          <p class="more">Press <b>Share screen</b> on a device card (<b>Screen</b> on Android) and the other device
+            opens a live view. Android asks for screen-capture permission every time and shows a notification with a
+            Stop button while it shares. Closing the viewer, or pressing Stop, ends the session. The picture is
+            compressed, kept to about 15 frames per second, and paused while the connection is busy so file transfers
+            aren’t slowed. On macOS allow Screen Recording; on Wayland pick the screen in the system dialog.</p><span
             class="tgl">More<svg>
               <use href="#i-chev" />
             </svg></span>
@@ -2314,6 +2369,13 @@
             stops Android from shutting down the background link.</p>
         </details>
         <details>
+          <summary>How does screen sharing work, and can someone watch without me knowing?</summary>
+          <p>No. Sharing only starts when the person whose screen it is presses <b>Share screen</b> (or <b>Screen</b> on
+            Android, which also shows Android’s own permission prompt every time and a notification while it runs).
+            The other device only watches: it can’t click or type. It works in both directions between paired devices
+            and ends when either side closes it or the connection drops.</p>
+        </details>
+        <details>
           <summary>Can the phone control my computer?</summary>
           <p>Only if you turn on <b>Allow commands from phone</b> on the computer. It’s off by default, commands never
             run with administrator rights, and deleting files is always refused.</p>
@@ -2325,7 +2387,7 @@
   <section id="download">
     <div class="w rv">
       <div class="eb">Download</div>
-      <h2>Get Y Connect <span id="dlV">v1.2</span></h2>
+      <h2>Get Y Connect <span id="dlV">v2.0</span></h2>
       <p class="sub">Update every device to the same version so they can find and pair with each other.</p>
       <div class="rel" id="rel">
         <div class="rel-h"><span class="tag">Latest release</span><b id="relVer">…</b><small
@@ -2333,28 +2395,28 @@
         <p class="rel-n sk" id="relNotes">Loading the latest release from GitHub…</p>
         <div class="assets" id="assets"></div>
         <form class="chk" id="chk" autocomplete="off"><label for="myV">Which version do you have?</label><input id="myV"
-            placeholder="v1.2" inputmode="decimal" maxlength="16"><button class="btn s"
+            placeholder="v2.0" inputmode="decimal" maxlength="16"><button class="btn s"
             type="submit">Check</button><output id="chkOut" for="myV"></output></form>
       </div>
       <div class="dls">
         <div class="dl" data-os="and"><span class="tag">Android 10+</span>
           <h3>Android</h3>
           <p>Installable APK. Verify it came from the Releases page and check its SHA‑256 before installing.</p>
-          <code>Y-Connect-v1.2.apk</code><a class="btn s" data-get="and"
+          <code>Y-Connect-v2.0.apk</code><a class="btn s" data-get="and"
             href="https://github.com/Yokeswaran4/Y-Connect/releases/latest">Get the APK</a>
         </div>
         <div class="dl" data-os="lnx"><span class="tag">Linux x64</span>
           <h3>Linux</h3>
           <p>AppImage. Make it executable, then run it. On Wayland, install <code>wl-clipboard</code> for reliable
             clipboard sync.</p>
-          <div class="cmd" data-copy="chmod +x Y-Connect-v1.2.AppImage &amp;&amp; ./Y-Connect-v1.2.AppImage"><span>chmod
+          <div class="cmd" data-copy="chmod +x Y-Connect-v2.0.AppImage &amp;&amp; ./Y-Connect-v2.0.AppImage"><span>chmod
               +x *.AppImage</span><span>copy</span></div><a class="btn s" data-get="lnx"
             href="https://github.com/Yokeswaran4/Y-Connect/releases/latest">Get the AppImage</a>
         </div>
         <div class="dl" data-os="win"><span class="tag">Windows</span>
           <h3>Windows</h3>
           <p>Installer or portable build. Allow the firewall prompt on private networks the first time you launch it.
-          </p><code>Setup-v1.2.exe · Portable-v1.2.exe</code><a class="btn s" data-get="win"
+          </p><code>Setup-v2.0.exe · Portable-v2.0.exe</code><a class="btn s" data-get="win"
             href="https://github.com/Yokeswaran4/Y-Connect/releases/latest">Get the installer</a>
         </div>
       </div>
@@ -2426,6 +2488,8 @@
       pairing: { win: false, lnx: false, and: false },
       tr: per(() => [{ id: 1, name: 'holiday-photos', kind: 'Folder', pct: 64, st: 'paused' }, { id: 2, name: 'report.pdf', kind: 'File', pct: 38, st: 'paused' }]),
       log: per(() => null),
+      scr: per(() => null),      // null | 'share' (our screen is shown on the other device) | 'watch' (we watch theirs)
+      consent: per(() => false), // Android's "Start recording or casting?" prompt is showing
       term: [{ c: 'uname -sr', o: 'Linux 6.x' }, { c: 'uptime -p', o: 'up 3 hours, 12 minutes' }],
       seq: 10
     };
@@ -2443,6 +2507,23 @@
     const CMD = {
       'uname -sr': 'Linux 6.x', 'uptime -p': 'up 3 hours, 12 minutes', 'whoami': 'you', 'date': () => new Date().toString().slice(0, 24), 'hostname': 'arch-pc', 'pwd': '/home/you', 'ls': 'Documents  Downloads  Music  Pictures', 'echo hello': 'hello', 'free -h': 'Mem: 15Gi total, 6.1Gi used'
     };
+    const mockPc = '<div class="scr-v pc"><div class="mk-bar"><i></i><i></i><i></i></div><div class="mk-win"><b></b><b></b><b></b><b></b></div><span class="mk-cur"></span></div>';
+    const mockPh = '<div class="scr-v ph"><div class="mk-st"><span>9:41</span><span>5G</span></div><div class="mk-note"></div><div class="mk-grid">' + '<i></i>'.repeat(12) + '</div><span class="mk-pill"></span></div>';
+    function scrCard() {
+      const peer = D[cur].c[0], st = S.scr[cur], isAnd = cur == 'and';
+      const row = (inner, acts) => `<div class="k"><div class="av on">${ic('screen')}</div><div class="inf">${inner}</div><div class="acts">${acts}</div></div>`;
+      if (S.consent[cur]) return row('<b>Start recording or casting with Y Connect?</b><small>Everything on your screen will be visible to ' + peer + ', including notifications.</small>',
+        '<button class="fbn g" data-a="scr-no">Cancel</button><button class="fbn" data-a="scr-go">Start now</button>');
+      if (st) {
+        const sharing = st == 'share';
+        const mock = (sharing ? isAnd : !isAnd) ? mockPh : mockPc; // our own screen when sharing, theirs when watching
+        return row(sharing ? '<b>Sharing your screen</b><small>' + peer + ' can watch, not control</small>' : '<b>Watching ' + peer + '</b><small>View only</small>',
+          '<button class="fbn red" data-a="scr-stop">' + (sharing ? 'Stop sharing' : 'Stop watching') + '</button>')
+          + `<div class="scr"><div class="scr-h"><i class="live"></i><span>${sharing ? 'What ' + peer + ' sees' : peer + '’s screen'}</span><small>live · encrypted</small></div>${mock}</div>`;
+      }
+      return row('<b>Screen sharing</b><small>View only. The device that shares starts it; “Watch” plays the other side.</small>',
+        `<button class="fbn" data-a="scr-share">${isAnd ? 'Screen' : 'Share screen'}</button><button class="fbn g" data-a="scr-watch">Watch screen</button>`);
+    }
     const V = {
       devices() {
         const d = D[cur], p = S.paired[cur], pg = S.pairing[cur];
@@ -2450,6 +2531,7 @@
         return `<h3 class="h">Devices</h3><p class="s2">Connected over your local network</p>
  ${dev(d.c[0], d.c[1], d.c[2] + ' · ' + d.c[3], true)}
  ${p ? dev(d.n[0], d.n[1], 'Connected · 14 ms', true) : ''}
+ ${scrCard()}
  <div class="lb">Nearby devices</div>
  ${p ? `<div class="rad"><i></i>Scanning for more devices…</div>`
             : `<div class="k"><div class="av">${ic(d.n[1])}</div><div class="inf"><b>${d.n[0]}</b><small>${pg ? 'Enter code <b>K7QM-2XPD</b> on this device…' : 'Ready to pair'}</small></div><button class="fbn" data-a="pair"${pg ? ' disabled' : ''}>${pg ? 'Pairing…' : 'Pair'}</button></div>`}
@@ -2503,6 +2585,11 @@
       S.tr[cur].unshift(t); logAdd(cur, (kind == 'Folder' ? 'Sending folder: ' : 'Sending file: ') + name);
       toast('Sending ' + name + '… watch it on the ' + lbl('files') + ' tab'); render(); ensureTick()
     }
+    function startScr(mode) {
+      S.scr[cur] = mode; const peer = D[cur].c[0];
+      logAdd(cur, mode == 'share' ? 'Sharing screen with ' + peer : 'Watching screen: ' + peer);
+      toast(mode == 'share' ? 'Sharing your screen with ' + peer : 'Watching ' + peer + '’s screen'); render()
+    }
     function runCmd(c) {
       c = c.trim(); if (!c) return;
       let o, bad = false;
@@ -2524,6 +2611,11 @@
         S.pairing[o] = true; render();
         setTimeout(() => { S.pairing[o] = false; S.paired[o] = true; logAdd(o, 'Paired with ' + D[o].n[0]); if (cur == o) { toast('Paired with ' + D[o].n[0]); render() } }, 1700)
       }
+      else if (act == 'scr-share') { if (cur == 'and') { S.consent[cur] = true; render() } else startScr('share') }
+      else if (act == 'scr-go') { S.consent[cur] = false; startScr('share') }
+      else if (act == 'scr-no') { S.consent[cur] = false; render() }
+      else if (act == 'scr-watch') startScr('watch');
+      else if (act == 'scr-stop') { S.scr[cur] = null; logAdd(cur, 'Screen sharing stopped'); toast('Screen sharing stopped'); render() }
       else if (act == 'send') startSend('File');
       else if (act == 'folder') startSend('Folder');
       else if (act == 'cancel') { const t = S.tr[cur].find(x => x.id == a.dataset.id); if (t) { t.st = 'cancelled'; logAdd(cur, 'Transfer cancelled: ' + t.name); render() } }
@@ -2613,7 +2705,7 @@
     }
     function check() {
       const out = $('#chkOut'), v = $('#myV').value.trim(); out.dataset.ran = '1';
-      if (!/^v?\d+(\.\d+){0,3}$/i.test(v)) { out.className = 'err'; out.textContent = 'Type a version like v1.2 (you can find it in the app’s About page).'; return }
+      if (!/^v?\d+(\.\d+){0,3}$/i.test(v)) { out.className = 'err'; out.textContent = 'Type a version like v2.0 (you can find it in the app’s About page).'; return }
       store.set('yc-myv', v);
       if (!rel || rel.none) { out.className = ''; out.textContent = 'Loading the latest release…'; loadRelease(true).then(() => { if (rel && !rel.none) check() }); return }
       if (isNewer(rel.tag, v)) { out.className = 'new'; out.innerHTML = `${rel.tag} is available. You have ${v.replace(/[<>&"]/g, '')}. <a href="${rel.url}" style="color:inherit">See what’s new →</a>` }
@@ -2621,7 +2713,7 @@
     }
     $('#chk').addEventListener('submit', e => { e.preventDefault(); check() });
     $('#relBtn').onclick = () => { $('#relNotes').className = 'rel-n sk'; loadRelease(true) };
-    const saved = store.get('yc-myv'); $('#myV').value = saved || 'v1.2';
+    const saved = store.get('yc-myv'); $('#myV').value = saved || 'v2.0';
     loadRelease();
 
     /* ================= scroll effects ================= */

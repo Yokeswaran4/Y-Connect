@@ -43,7 +43,7 @@ object Updates {
     fun lastChecked(ctx: Context): Long = prefs(ctx).getLong("upd_last", 0L)
 
     fun currentVersion(ctx: Context): String =
-        try { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: "v1.2" } catch (_: Exception) { "v1.2" }
+        try { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: "v2.0" } catch (_: Exception) { "v2.0" }
 
     /** "v1.2.0-beta" -> [1, 2, 0]. Anything that is not a number is ignored. */
     internal fun parts(v: String): List<Int> =

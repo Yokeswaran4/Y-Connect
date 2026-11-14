@@ -27,6 +27,7 @@
  * not a sandbox: the real protection is that the feature is off by default and needs a paired phone.
  */
 const { spawn, execFile } = require('child_process');
+const fs = require('fs');
 const os = require('os');
 
 const IS_WIN = process.platform === 'win32';
@@ -66,6 +67,17 @@ function findDeletion(cmd) {
 const E = (kind, why, fix) => ({ kind, why, fix });
 const me = () => D.getConfig().name || os.hostname();
 const sh = () => (IS_WIN ? 'Windows' : 'Linux');
+
+/** Linux/macOS: bash when it is installed (what people expect from a terminal), plain sh otherwise. Looked up once. */
+let unixShellCache = null;
+function unixShell() {
+  if (unixShellCache) return unixShellCache;
+  unixShellCache = { file: '/bin/sh', name: 'sh' };
+  for (const f of ['/bin/bash', '/usr/bin/bash', '/usr/local/bin/bash']) {
+    try { fs.accessSync(f, fs.constants.X_OK); unixShellCache = { file: f, name: 'bash' }; break; } catch {}
+  }
+  return unixShellCache;
+}
 
 function explainExit({ code, signal, stderr, stdout, timedOut, timeout, cancelled, shell }) {
   const text = (stderr + '\n' + stdout).slice(0, 6000);
@@ -183,7 +195,7 @@ function runCommand(ws, who, msg) {
       opts.windowsVerbatimArguments = true;
     }
   } else {
-    file = '/bin/sh';
+    file = unixShell().file;
     args = ['-c', cmd];
     opts.detached = true; // own process group so a timeout can end the whole tree
   }
@@ -229,7 +241,7 @@ function runCommand(ws, who, msg) {
 }
 
 function explainSpawn(e, file) {
-  if (e && e.code === 'ENOENT') return E('no-shell', `The shell (${file}) could not be started on ${me()}.`, IS_WIN ? 'Check that cmd.exe / powershell.exe exist and are not blocked by security software.' : 'Check that /bin/sh exists. On a very minimal system install a shell package (dash or bash).');
+  if (e && e.code === 'ENOENT') return E('no-shell', `The shell (${file}) could not be started on ${me()}.`, IS_WIN ? 'Check that cmd.exe / powershell.exe exist and are not blocked by security software.' : 'Check that bash or /bin/sh exists. On a very minimal system install a shell package (dash or bash).');
   if (e && (e.code === 'EACCES' || e.code === 'EPERM')) return E('permission', `Not allowed to start the shell (${file}).`, 'Security software or a sandbox is blocking Y Connect from starting programs. Allow it there.');
   return E('spawn-failed', `The command could not be started: ${(e && e.message) || 'unknown error'}.`, 'Try again; if it keeps failing, restart Y Connect on the computer.');
 }
@@ -283,7 +295,10 @@ function termOpen(ws, who, msg) {
     opts.windowsHide = true;
     if (shell === 'powershell') { file = 'powershell.exe'; args = ['-NoLogo', '-NoProfile', '-NoExit', '-Command', '[Console]::OutputEncoding=[Text.Encoding]::UTF8']; }
     else { file = process.env.ComSpec || 'cmd.exe'; args = ['/d', '/k', 'chcp 65001>nul']; }
-  } else { file = '/bin/sh'; args = ['-i']; opts.detached = true; }
+  } else { // --norc/--noprofile: no startup files, so the prompt and output stay predictable for the phone's terminal view
+    const u = unixShell();
+    file = u.file; args = u.name === 'bash' ? ['--noprofile', '--norc', '-i'] : ['-i']; opts.detached = true;
+  }
   let child;
   try { child = spawn(file, args, opts); } catch (e) { return fail2(explainSpawn(e, file)); }
   const t = { sid, ws, who, child, buf: [], bufSize: 0, flushTimer: null, idle: null, closed: false, opened: Date.now(), pending: '' };
@@ -299,8 +314,8 @@ function termOpen(ws, who, msg) {
   child.on('error', (e) => { terms.delete(sid); t.closed = true; clearTimeout(t.idle); D.sendTo(ws, { type: 'cmd-term-exit', sid, code: -1, error: explainSpawn(e, file) }); });
   child.on('close', (code) => termExit(sid, code));
   termBump(t);
-  D.addLog('cmd', `Terminal opened by ${who.name}`, shell === 'powershell' ? 'PowerShell' : (IS_WIN ? 'Command Prompt' : 'sh'));
-  D.sendTo(ws, { type: 'cmd-term-ready', sid, shell: shell === 'powershell' ? 'PowerShell' : (IS_WIN ? 'Command Prompt' : 'sh'), cwd: os.homedir() });
+  D.addLog('cmd', `Terminal opened by ${who.name}`, shell === 'powershell' ? 'PowerShell' : (IS_WIN ? 'Command Prompt' : unixShell().name));
+  D.sendTo(ws, { type: 'cmd-term-ready', sid, shell: shell === 'powershell' ? 'PowerShell' : (IS_WIN ? 'Command Prompt' : unixShell().name), cwd: os.homedir() });
 }
 
 function termInput(ws, who, msg) {

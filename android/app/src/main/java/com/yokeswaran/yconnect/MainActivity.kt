@@ -5,6 +5,7 @@ package com.yokeswaran.yconnect
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -72,6 +73,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // "Share screen": Android's own consent screen first, then the service starts capturing
+    private var shareTarget: String? = null
+    private val projectionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        val id = shareTarget
+        val data = r.data
+        if (id != null && r.resultCode == RESULT_OK && data != null) ScreenShareService.start(this, r.resultCode, data, id)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -112,6 +121,13 @@ class MainActivity : ComponentActivity() {
                     onSendFolder = { id ->
                         folderTarget = id
                         folderPicker.launch(null)
+                    },
+                    onShareScreen = { id ->
+                        if (Screen.state.value.sharingTo != null) ScreenShareService.stop(this)
+                        else {
+                            shareTarget = id
+                            projectionLauncher.launch((getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager).createScreenCaptureIntent())
+                        }
                     },
                 )
             }

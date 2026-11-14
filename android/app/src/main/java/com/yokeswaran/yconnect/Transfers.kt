@@ -93,7 +93,7 @@ private class TransferState(
  * Folders: file-offer also carries `rel` ("Folder/sub/name"); the sub folders are created below Downloads/YConnect.
  */
 object Transfers {
-    private const val CHUNK = 64 * 1024
+    private const val CHUNK = 256 * 1024 // bigger frames = fewer cipher set-ups and WebSocket frames per MB
 
     val transfers = MutableStateFlow<List<Transfer>>(emptyList())
 
@@ -445,12 +445,14 @@ object Transfers {
                 if (t.finished || !conn.isOpen) throw IllegalStateException("stopped")
                 val n = input.read(buf, 4, CHUNK)
                 if (n < 0) break
-                // simple back-pressure: wait until the socket has flushed the previous chunk
+                // encrypt first, then wait: the CPU work overlaps with the socket still flushing the previous frame
+                val frame = Crypto.encryptBytes(Hub.keyFor(conn) ?: throw IllegalStateException("stopped"), buf, 0, 4 + n)
+                // simple back-pressure: wait until the socket has flushed the previous frame
                 while (conn.hasBufferedData()) {
                     if (t.finished || !conn.isOpen) throw IllegalStateException("stopped")
-                    LockSupport.parkNanos(200_000)
+                    LockSupport.parkNanos(100_000)
                 }
-                conn.send(Crypto.encryptBytes(Hub.keyFor(conn) ?: throw IllegalStateException("stopped"), buf, 0, 4 + n))
+                conn.send(frame)
                 t.done += n
                 publish()
             }
@@ -609,6 +611,10 @@ object Transfers {
             return
         }
         if (plain.size < 4) return
+        if (plain[0].toInt() == 0 && plain[1].toInt() == 0 && plain[2].toInt() == 0 && plain[3].toInt() == 0) { // tid 0 = a screen picture, not file data
+            if (Hub.connInfo.containsKey(conn)) Screen.onFrame(conn, plain)
+            return
+        }
         val tid = ((plain[0].toLong() and 0xff) shl 24) or ((plain[1].toLong() and 0xff) shl 16) or
             ((plain[2].toLong() and 0xff) shl 8) or (plain[3].toLong() and 0xff)
         val t = incoming[tid] ?: return

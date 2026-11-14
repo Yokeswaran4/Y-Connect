@@ -52,6 +52,7 @@ data class HubSettings(
     val autoClipboard: Boolean = false, // send the phone's clipboard automatically (needs "Display over other apps")
     val shareStorage: Boolean = false,  // a paired computer may mount this phone's storage (read only until storageWrite is on)
     val storageWrite: Boolean = false,  // ... and may also change files
+    val allowControl: Boolean = false,  // a device that views our shared screen may touch / type here (needs the accessibility service)
 )
 data class Peer(val id: String, val name: String, val platform: String, val address: String, val battery: Int = -1, val charging: Boolean = false)
 /** A device that has Y Connect open on this network but is not connected to us (yet). */
@@ -145,6 +146,7 @@ object Hub {
             prefs.getBoolean("autoclip", false),
             prefs.getBoolean("sharestorage", false),
             prefs.getBoolean("storagewrite", false),
+            prefs.getBoolean("allowcontrol", false),
         )
         settings.value = s
         RemoteCommands.load(appCtx)
@@ -189,8 +191,9 @@ object Hub {
             .putBoolean("files", n.acceptFiles).putString("theme", n.theme)
             .putBoolean("syscolors", n.systemColors).putBoolean("battery", n.batterySync)
             .putBoolean("autoclip", n.autoClipboard)
-            .putBoolean("sharestorage", n.shareStorage).putBoolean("storagewrite", n.storageWrite).apply()
+            .putBoolean("sharestorage", n.shareStorage).putBoolean("storagewrite", n.storageWrite).putBoolean("allowcontrol", n.allowControl).apply()
         settings.value = n
+        if (old.allowControl && !n.allowControl) Screen.setControl(false, true) // turning the setting off ends control right away
         main.post { ClipboardWatcher.refresh(appCtx) }
         if (!old.batterySync && n.batterySync) sendBattery(null)
         if (old.name != n.name) {
@@ -285,6 +288,7 @@ object Hub {
 
     internal fun onSocketClosed(conn: WebSocket) {
         Transfers.onDisconnected(conn)
+        Screen.onDisconnected(conn) // must run before connInfo forgets who this was
         RemoteCommands.onDisconnected(conn) // must run before connInfo forgets who this was
         if (pairReqConn === conn) { pairReqConn = null; pairRequest.value = null }
         if (pairOutConn === conn) { pairOutConn = null; pairOut.value?.let { if (it.state == "waiting") pairOut.value = it.copy(state = "failed") } }
@@ -323,6 +327,10 @@ object Hub {
         }
         if (j.optString("type").startsWith("file-")) {
             if (connInfo.containsKey(conn)) Transfers.onMessage(conn, j)
+            return
+        }
+        if (j.optString("type").startsWith("screen-")) {
+            if (connInfo.containsKey(conn)) Screen.onMessage(conn, j)
             return
         }
         if (j.optString("type").startsWith("fs-")) {

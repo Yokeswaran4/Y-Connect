@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">Y Connect</string>
     <string name="tile_label">Send clipboard</string>
+    <string name="remote_control_service">Y Connect remote control</string>
+    <string name="remote_control_desc">Lets a paired computer that is watching this phone\'s screen tap, swipe and type on it. Used only while you share your screen and have \"Allow remote control\" turned on in Y Connect. It does not read what is on your screen.</string>
 </resources>

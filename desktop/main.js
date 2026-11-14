@@ -20,6 +20,7 @@ const dgram = require('dgram');
 const crypto = require('crypto');
 const { WebSocketServer, WebSocket } = require('ws');
 const transfer = require('./transfer');
+const screenShare = require('./screen');
 const remote = require('./remote');
 const storage = require('./storage');
 const battery = require('./battery');
@@ -34,7 +35,7 @@ const latency = require('./latency').create({
   onChange: (id) => { if (win && !win.isDestroyed()) win.webContents.send('latency', id, latency.stats(id)); },
 });
 
-const VERSION_LABEL = 'v1.2';
+const VERSION_LABEL = 'v2.0';
 const WS_PORT = 48998;
 const UDP_PORT = 48999;
 const MAX_CLIP = 1024 * 1024;
@@ -103,6 +104,8 @@ function loadConfig() {
     launchOnStartup: false, // start with the computer when you log in (Windows / Linux)
     startHidden: true,    // when launching on startup: stay in the tray (true) or show the window (false)
     batterySync: true,    // share this computer's battery level and show the phone's
+    allowControl: false,  // a device that views our shared screen may move the mouse / type here. Off until the user turns it on
+    adbPath: '',          // optional: full path of adb, used to control a phone from the screen viewer (found in PATH / the Android SDK otherwise)
     allowCommands: false, // phone may run commands here (never with sudo/admin). Off until the user turns it on
     theme: 'system', // system | light | dark
     systemColors: true, // follow the OS accent colour; off = Y Connect blue
@@ -177,7 +180,7 @@ function accentColor() {
 const bgColor = () => (nativeTheme.shouldUseDarkColors ? '#202020' : '#f3f3f3');
 function snapshot() {
   const { paired: _codes, ...publicConfig } = config; // pairing codes never go to the window
-  return { config: publicConfig, peers: [...peers.values()].map((p) => ({ ...p.info, lat: latency.stats(p.info.id) })), nearby: nearbyList(), mounts: storage.list(), pairRequest: pairRequest && { id: pairRequest.id, name: pairRequest.name, sas: pairRequest.sas }, pairOut: pairOut && { id: pairOut.id, name: pairOut.name, sas: pairOut.sas, state: pairOut.state }, log: logEntries, ips: localIps(), version: VERSION_LABEL, accent: accentColor(), platform: process.platform, update: updateInfo && updateInfo.newer ? updateInfo : null, transfers: transfer.list(), autostart: { supported: autostart.supported, enabled: autostart.isEnabled(), hidden: config.startHidden !== false, error: autostartError } };
+  return { config: publicConfig, peers: [...peers.values()].map((p) => ({ ...p.info, lat: latency.stats(p.info.id) })), nearby: nearbyList(), mounts: storage.list(), pairRequest: pairRequest && { id: pairRequest.id, name: pairRequest.name, sas: pairRequest.sas }, pairOut: pairOut && { id: pairOut.id, name: pairOut.name, sas: pairOut.sas, state: pairOut.state }, log: logEntries, ips: localIps(), version: VERSION_LABEL, accent: accentColor(), platform: process.platform, update: updateInfo && updateInfo.newer ? updateInfo : null, transfers: transfer.list(), screen: screenShare.state(), autostart: { supported: autostart.supported, enabled: autostart.isEnabled(), hidden: config.startHidden !== false, error: autostartError } };
 }
 function pushState() {
   if (pushTimer) return;
@@ -201,6 +204,7 @@ function broadcast(obj) {
 }
 function dropSocket(ws) {
   transfer.onDisconnected(ws);
+  screenShare.onDisconnected(ws);
   remote.onDisconnected(ws);
   storage.onDisconnected(ws);
   if (pairRequest && pairRequest.ws === ws) { pairRequest = null; }
@@ -235,6 +239,7 @@ function handleBinary(ws, data) {
   let plain;
   try { plain = pc.openBytes(ws._key, Buffer.isBuffer(data) ? data : Buffer.concat(data)); }
   catch { try { ws.close(); } catch {} return; }
+  if (plain.length >= 8 && plain.readUInt32BE(0) === 0) return screenShare.onFrame(ws, plain); // tid 0 = screen picture
   transfer.onBinary(ws, plain);
 }
 const suppressed = new Map(); // notifications we display ourselves, so the D-Bus watcher never forwards them back
@@ -387,6 +392,7 @@ function handle(ws, raw) {
   }
   if (msg.type === 'ping') { if (Number.isFinite(msg.n)) sendTo(ws, { type: 'pong', n: msg.n }); return; }
   if (msg.type === 'pong') { if (Number.isFinite(msg.n)) for (const [id, p] of peers) if (p.ws === ws) latency.onPong(id, msg.n); return; }
+  if (typeof msg.type === 'string' && msg.type.startsWith('screen-')) { screenShare.onMessage(ws, msg); return; }
   if (typeof msg.type === 'string' && msg.type.startsWith('file-')) { transfer.onMessage(ws, msg); return; }
   if (typeof msg.type === 'string' && msg.type.startsWith('cmd-')) { remote.onMessage(ws, msg); return; }
   if (typeof msg.type === 'string' && msg.type.startsWith('fs-')) { storage.onMessage(ws, msg); return; }
@@ -415,7 +421,7 @@ function dial(host, port, o, onFail) {
   if (pending.has(tag)) return false;
   pending.add(tag);
   let ws;
-  try { ws = new WebSocket('ws://' + host + ':' + port, { handshakeTimeout: 4000 }); }
+  try { ws = new WebSocket('ws://' + host + ':' + port, { handshakeTimeout: 4000, perMessageDeflate: false }); }
   catch { pending.delete(tag); if (onFail) onFail(); return false; }
   ws.on('open', () => attach(ws, host, o));
   ws.on('close', () => { pending.delete(tag); dropSocket(ws); });
@@ -773,7 +779,9 @@ ipcMain.handle('set-config', (_e, patch) => {
     else addLog('info', want ? 'Launch on startup: on' : 'Launch on startup: off', want ? (config.startHidden ? 'Starts hidden in the tray' : 'Shows the window') : '');
   } else if (config.startHidden !== oldHidden) addLog('info', 'Startup mode saved', config.startHidden ? 'Starts hidden in the tray' : 'Shows the window');
   if (typeof patch.batterySync === 'boolean') { config.batterySync = patch.batterySync; if (config.batterySync) sendBattery(); }
+  if (typeof patch.adbPath === 'string') config.adbPath = patch.adbPath.trim().slice(0, 500);
   if (typeof patch.allowCommands === 'boolean') config.allowCommands = patch.allowCommands;
+  if (typeof patch.allowControl === 'boolean') { config.allowControl = patch.allowControl; screenShare.onConfigChanged(); }
   if (typeof patch.systemColors === 'boolean') config.systemColors = patch.systemColors;
   const wantUpd = typeof patch.autoUpdateCheck === 'boolean' && patch.autoUpdateCheck && !config.autoUpdateCheck;
   if (typeof patch.autoUpdateCheck === 'boolean') config.autoUpdateCheck = patch.autoUpdateCheck;
@@ -877,6 +885,7 @@ app.whenReady().then(() => {
   startDiscovery();
   remote.init({ peers, sendTo, getConfig: () => config, addLog });
   storage.init({ peers, sendTo, addLog, pushState });
+  screenShare.init({ peers, sendTo, encryptBin: (buf, ws) => pc.sealBytes(ws._key, buf), getConfig: () => config, addLog, pushState, icon: ICON });
   transfer.init({ peers, sendTo, encryptBin: (buf, ws) => pc.sealBytes(ws._key, buf), getConfig: () => config, addLog, pushState, getWin: () => win, icon: ICON });
   createTray();
   createWindow(!(startHidden && tray)); // started by autostart: stay in the tray (but show the window if there is no tray)

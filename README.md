@@ -8,7 +8,7 @@
 
 Notifications · Clipboard · File transfer · Battery status · Remote commands
 
-![Version](https://img.shields.io/badge/version-v1.2-2f81f7)
+![Version](https://img.shields.io/badge/version-v2.0-2f81f7)
 ![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)
 ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20Linux%20%7C%20Windows-3ddc84)
 
@@ -55,14 +55,23 @@ It is tested on Android, Arch linux, Debian 13 and Windows 11.
 
 ## What's new
 
-- **Mount your phone's storage (v1.2).** On the computer press **Mount storage** on a connected phone and its files appear as a drive (Windows) or network location (Linux). The phone has to allow it first: *Settings → Storage sharing → Share phone storage* (off by default, needs Android 11+ and "All files access"). It is read-only until you also switch on **Allow changes**. The computer runs a small WebDAV server that listens on `127.0.0.1` only, behind a random secret in the address, and relays every request over the same encrypted link as everything else, so nothing travels in clear text. Linux uses `gio mount` (gvfs); if it is missing, the address is copied so you can connect to it in your file manager. Windows needs the *WebClient* service and limits file downloads to 50 MB per file unless you raise `FileSizeLimitInBytes` in the registry.
-- **New Android look (v1.2).** The Android app now follows Cat Senpai's design (tonal rounded cards, Material bottom bar, spring animations) in the default Y Connect blue.
-- **Android animations.** Tabs slide and fade in the direction you move, cards rise in one after another, counters roll when their number changes, the bottom bar icon pops when selected, and the logo spins in on start. Only graphics layers are animated, so it stays smooth on slower phones. Back gestures use Android's predictive back animation.
-- **Leftovers from the old name are cleaned up.** The desktop app removes old menu entries, startup entries and icons and refreshes the icon cache. The Android app shows an *Uninstall* card on the Devices page if the old app is still installed.
-- **Check for updates.** Android: *About → Updates*. Linux and Windows: *Settings → About & updates*. "Check now" asks GitHub for the latest release. The switch **Notify me about new releases** (off by default) checks about once a day and shows one notification per new version. This is the only feature that uses the internet; it sends nothing about you or your devices.
-- **Smoother Android UI.** Cards no longer animate one by one with springs; tabs use a quick fade. Below-the-fold cards load a moment after the page, and the slow start-up work (key derivation, sockets) runs off the main thread.
-- **Shorter "About this device".** Only device, system and app version are shown. CPU, build and other details are added to the debug report when you copy or share it.
-- **Website.** Interactive preview (pair, send files, run commands), live latest-release panel with a version checker, FAQ, expandable feature cards.
+### v2.0
+
+- **Screen sharing, both ways.** Show your computer's screen on your phone, or your phone's screen on your computer. On a device card press **Share screen** (**Screen** on Android) and the other device opens a live, view-only picture. Android asks for its own screen-capture permission every time and shows a notification with a Stop button while it shares. Closing the viewer, pressing Stop, or losing the connection ends the session. The picture is compressed, kept to about 15 frames per second, and paused while the connection is busy, so it never slows a file transfer. It travels over the same encrypted link as everything else. On macOS allow *Screen Recording*; on Wayland pick the screen in the system dialog.
+- **Much faster file transfers.** Files now travel in 256 KiB encrypted chunks instead of 64 KiB, the receiving computer buffers 4 MiB before it writes to disk (before, the connection paused after every chunk), and the sender reads straight into one reusable buffer. On Android the next chunk is encrypted while the previous one is still being sent. Resume, cancel and folder transfers work as before, and v2.0 still transfers with older versions.
+- **Bash in the remote terminal.** Commands and the terminal you open from your phone now run in **bash** on Linux and macOS (plain `sh` is used only if bash isn't installed). The terminal starts without your startup files so its output stays clean. Windows is unchanged. The guard rails (no `sudo`, no deleting files) are the same.
+- **Control a phone over ADB.** While you watch a phone's screen, **Control** in the viewer window now drives it through **adb** and Android's **Wireless debugging** (or USB debugging) instead of the accessibility service: real touch, drag, scroll, typing in any language, Ctrl+key combinations, a Back / Home / Recents bar, and a rotation-aware picture. Input is injected through the bundled [scrcpy](https://github.com/Genymobile/scrcpy) server (control channel only; video stays on Y Connect's own stream), so it is fast. Pair once in the viewer's **ADB setup** panel (the pairing address is found automatically); after that **Control** connects by itself. If the server can't start it falls back to plain `adb shell input` (tap / swipe / keys, no live dragging). The phone needs nothing from Y Connect for this and switching Wireless debugging off ends control instantly. Needs `adb` on the computer (Settings → *Control a phone (ADB)* shows what was found).
+- **Packaging fix.** `inputctl.js` was missing from the desktop build's file list, which would have broken screen sharing in packaged builds. It is included now.
+- **Remote control in screen sharing.** The device that watches a shared screen can now control it: mouse, keyboard and touch, in both directions. It is **off by default** and only the sharing device can allow it (Settings > *Allow remote control*). The sharer can stop control at any time while still sharing (**Stop control** on the desktop device card, or in the Android notification), turning the setting off ends it immediately, and held keys are released when it ends. Computer controlled by a phone: tap = click, drag = drag, hold = right click, two fingers = scroll, plus a Keyboard button. Phone controlled by a computer: click/tap, drag, scroll wheel and typing; right click = Back, Windows key = Home. On Windows nothing extra is needed; on Linux install `xdotool` (X11) or `ydotool` with its `ydotoold` service (Wayland). On Android switch on **Y Connect remote control** under Accessibility; it is only used for this and does not read the screen.
+- **Website.** The interactive preview can now try screen sharing: share or watch a screen on the Windows, Linux and Android views, including Android's permission prompt. New Screen sharing feature card and FAQ entry.
+- **Under the hood.** Screen pictures use the same connection as files, tagged so older versions simply ignore them. New tests cover screen sharing; the transfer tests no longer depend on chunk size.
+
+### Earlier releases (1.x)
+
+- **Mount your phone's storage.** Press **Mount storage** on a connected phone and its files appear as a drive (Windows) or network location (Linux). The phone has to allow it first: *Settings → Storage sharing → Share phone storage* (off by default, needs Android 11+ and "All files access"). It is read-only until you also switch on **Allow changes**. The computer runs a small WebDAV server that listens on `127.0.0.1` only, behind a random secret in the address, and relays every request over the same encrypted link, so nothing travels in clear text. Linux uses `gio mount` (gvfs); if it is missing, the address is copied so you can connect to it in your file manager. Windows needs the *WebClient* service and limits file downloads to 50 MB per file unless you raise `FileSizeLimitInBytes` in the registry.
+- **New Android look and animations.** The Android app follows Cat Senpai's design (tonal rounded cards, Material bottom bar) in the default Y Connect blue. Tabs fade in the direction you move, counters roll, and back gestures use Android's predictive back animation.
+- **Check for updates.** Android: *About → Updates*. Linux and Windows: *Settings → About & updates*. The switch **Notify me about new releases** (off by default) checks about once a day. This is the only feature that uses the internet; it sends nothing about you or your devices.
+- **Clean-up and polish.** Leftovers from the old app name are removed (Android shows an *Uninstall* card if the old app is still installed), "About this device" is shorter, and slow start-up work runs off the main thread.
 
 ## Overview
 
@@ -80,6 +89,7 @@ Y Connect links Android phones, Linux computers and Windows computers on the sam
 | Clipboard | Sync text between desktop and Android. Desktop-to-phone is automatic; Android-to-desktop can be sent with a tile, notification action, Share menu, or optional automatic mode. |
 | Notifications | Mirror Android notifications to connected devices. Linux desktop notifications can also be forwarded when `dbus-monitor` is installed. |
 | File transfer | Send files and folders in either direction, with progress, cancellation, collision-safe filenames, and resume after a disconnect. |
+| Screen sharing | Show this computer's screen on a phone, or a phone's screen on this computer, over the same encrypted connection. Started by the device that shares; the viewer can control the shared device only if the sharer turned *Allow remote control* on; Android asks for its screen-capture consent every time. |
 | Device discovery | Find devices automatically over UDP, with a Connect by IP option for networks that block discovery. |
 | Pairing | Pair devices with a code that is not transmitted over the network. |
 | Battery and latency | See connected devices' battery status and encrypted-link latency. |
@@ -107,16 +117,16 @@ Get the latest builds from **[Y Connect Releases](https://github.com/Yokeswaran4
 
 | File | Platform | Description |
 |---|---|---|
-| `Y-Connect-v1.2.apk` | Android 10 (API 29) or newer | Installable Android package. |
-| `Y-Connect-v1.2.AppImage` | Linux (x64) | Desktop app. Make it executable before starting it. |
-| `Y-Connect-Setup-v1.2.exe` | Windows | Installer. |
-| `Y-Connect-Portable-v1.2.exe` | Windows | Portable build that needs no installation. |
+| `Y-Connect-v2.0.apk` | Android 10 (API 29) or newer | Installable Android package. |
+| `Y-Connect-v2.0.AppImage` | Linux (x64) | Desktop app. Make it executable before starting it. |
+| `Y-Connect-Setup-v2.0.exe` | Windows | Installer. |
+| `Y-Connect-Portable-v2.0.exe` | Windows | Portable build that needs no installation. |
 
 Run the AppImage:
 
 ```bash
-chmod +x Y-Connect-v1.2.AppImage
-./Y-Connect-v1.2.AppImage
+chmod +x Y-Connect-v2.0.AppImage
+./Y-Connect-v2.0.AppImage
 ```
 
 When installing the APK outside Google Play, Play Protect may show a warning or block installation. Keep Play Protect enabled: confirm the APK came from the official Releases page, compare its SHA-256 checksum with the one published in the release notes, and review the permissions Android requests. If Play Protect still blocks the APK, do not bypass the warning; cancel the installation and wait for a verified build or contact the author.
@@ -130,6 +140,7 @@ When installing the APK outside Google Play, Play Protect may show a warning or 
 | Android (build) | Android Studio Ladybug or newer, **JDK 17 or 21** (Java 25 does not work with Gradle 8.9), Gradle 8.9 |
 | Android (run) | Android **10 or newer** (API 29); compiled against API 35 |
 | Network | All devices on the same LAN or Wi-Fi |
+| Optional (control a phone) | `adb` (Android platform-tools; `sudo apt install adb`, `sudo pacman -S android-tools`, `winget install Google.PlatformTools`) and a phone with Wireless debugging (Android 11+) or USB debugging |
 | Optional (Linux) | `dbus-monitor` (package `dbus` or `dbus-bin`) to forward this computer's notifications; `wl-clipboard` for reliable clipboard sync on Wayland |
 
 ## Building from source
@@ -150,9 +161,9 @@ npm start            # run directly to test
 Build a distributable (build each platform on its own operating system where possible):
 
 ```bash
-npm run dist:linux   # Linux AppImage    -> dist/Y-Connect-v1.2.AppImage
-npm run dist:win     # Windows installer -> dist/Y-Connect-Setup-v1.2.exe
-                     # Windows portable  -> dist/Y-Connect-Portable-v1.2.exe
+npm run dist:linux   # Linux AppImage    -> dist/Y-Connect-v2.0.AppImage
+npm run dist:win     # Windows installer -> dist/Y-Connect-Setup-v2.0.exe
+                     # Windows portable  -> dist/Y-Connect-Portable-v2.0.exe
 ```
 
 Building the Windows files on Linux can need Wine. If that fails, build on a Windows computer instead.
@@ -190,7 +201,7 @@ gradle wrapper --gradle-version 8.9    # once
 ./gradlew assembleDebug
 ```
 
-The APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`. Rename it to `Y-Connect-v1.2.apk` when you publish it.
+The APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`. Rename it to `Y-Connect-v2.0.apk` when you publish it.
 
 > **Smoothness:** debug builds are noticeably slower because Jetpack Compose isn't optimised in them. For day-to-day use, build the release variant instead (`gradle assembleRelease`, or **Build > Select Build Variant > release** in Android Studio). It is optimised with R8 and signed with the debug key so it installs directly. The APK is at `android/app/build/outputs/apk/release/app-release.apk`.
 
@@ -294,9 +305,24 @@ The Android **Run** tab has a terminal and can run commands on a paired Linux or
 
 The delete and elevation checks are guard rails, **not a security sandbox**. A determined command can still change files in other ways. Keep remote control off when it is not needed.
 
+## Controlling a phone with ADB
+
+1. On the computer, make sure `adb` works (`adb version`). Settings → **Control a phone (ADB)** shows whether Y Connect found it and lets you set its location.
+2. On the phone: **Settings → Developer options → Wireless debugging → on**. Tap **Pair device with pairing code**; keep that screen open.
+3. Press **Screen** on the phone to share it. In the viewer window on the computer press **Control**. The first time, the **ADB setup** panel opens with the pairing address filled in; type the 6-digit code and press **Pair & control**.
+4. From then on **Control** connects on its own (the changing connect port is found through mDNS). Over USB: enable USB debugging, plug the phone in, accept the prompt and press **Control**.
+
+Mouse: click = tap, drag = drag, wheel = scroll, right click = Back. Keyboard: typed characters are sent as text, Ctrl / Alt / Shift combinations as key presses, Esc = Back, Windows key = Home. Use the bar at the bottom of the viewer for Back / Home / Recents. If the phone rotates, the mapping follows the picture.
+
+The computer talks to the phone's `adbd` directly, protected by the pairing you approved on the phone; Y Connect's *Allow remote control* switch only governs the older accessibility-based control. Treat a paired computer like a trusted device: anyone with adb access to a phone can do more than tap (this feature only sends input, but the pairing itself allows more). Remove it under **Developer options → Wireless debugging → Paired devices**.
+
+Troubleshooting: *adb was not found* → install platform-tools or set the path in Settings. *No adb connection* → Wireless debugging must be on and the phone on the same Wi-Fi; pair again if the phone forgot the computer. *Basic mode* label → the scrcpy server could not start (some vendors block `app_process` under `/data/local/tmp`); typing and gestures still work but dragging happens when you release. Some phones also need **Developer options → USB debugging (Security settings)** to allow input injection (MIUI / HyperOS).
+
 ## Security and privacy
 
 - WebSocket messages and file-transfer data are encrypted with AES-256-GCM. The key is derived from the pair's random pairing code using PBKDF2-SHA256.
+- Controlling a phone over ADB never passes through Y Connect: it uses the phone's own pairing (Wireless debugging) and ends when that is switched off. The bundled scrcpy server is started with video, audio and clipboard sync off and is stopped, and its port forward removed, when control ends or the viewer closes.
+- Remote control is a separate switch from screen sharing, off by default, and decided only by the device being controlled. Input events travel over the same encrypted link, are checked against the session, rate limited and validated by the sharer before anything is injected, and are dropped as soon as control is stopped.
 - Each pair of devices has its own random 80-bit pairing code. It is handed over once, when the other device taps Accept, encrypted with a key from a temporary ECDH (P-256) exchange; both screens show a check number derived from that exchange so a device in the middle would be noticed. Messages from devices without the pair's code cannot be decrypted and are dropped.
 - Device discovery uses UDP broadcast, and data connections are made directly between devices. The app does not require a cloud service, relay, or account.
 - Received file paths are sanitized, files are not overwritten, and data beyond the announced file size is rejected.
@@ -441,6 +467,9 @@ Y-Connect/
 │   ├── main.js                     App core: config, discovery, pairing, WebSocket server/client, tray, IPC
 │   ├── preload.js                  Safe bridge between the main process and the UI
 │   ├── transfer.js                 Encrypted chunked file transfer, folders, resume
+│   ├── adbctl.js                   Controls a phone over adb: pairing, scrcpy-server input channel, `adb shell input` fallback
+│   ├── inputctl.js                 Mouse / keyboard injection for remote control of this computer
+│   ├── vendor/                     Bundled scrcpy-server (Apache-2.0)
 │   ├── remote.js                   Remote command execution and safety checks
 │   ├── battery.js                  Battery reading (Linux sysfs / Windows Win32_Battery)
 │   ├── latency.js                  Ping/pong latency tracker
@@ -491,6 +520,7 @@ The project uses the following open-source software:
 | [`ws`](https://github.com/websockets/ws) | Desktop WebSocket transport | MIT |
 | [electron-builder](https://github.com/electron-userland/electron-builder) | Desktop packaging and builds | MIT |
 | [D-Bus `dbus-monitor`](https://www.freedesktop.org/wiki/Software/dbus/) | Optional Linux desktop notification forwarding; system-provided, not bundled | AFL-2.1 or GPL-2.0-or-later |
+| [scrcpy](https://github.com/Genymobile/scrcpy) server | Input injection when controlling a phone over ADB; bundled unmodified in `desktop/vendor/` | Apache-2.0 |
 | [wl-clipboard](https://github.com/bugaevc/wl-clipboard) | Optional Wayland clipboard access on Linux; system-provided, not bundled | GPL-3.0-or-later |
 | [Kotlin](https://github.com/JetBrains/kotlin) and [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) | Android app language and asynchronous operations | Apache-2.0 |
 | [Jetpack Compose](https://developer.android.com/compose), [Material 3](https://developer.android.com/develop/ui/compose/designsystems/material3) and [Material Icons](https://github.com/google/material-design-icons) | Android user interface | Apache-2.0 |

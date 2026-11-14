@@ -192,6 +192,8 @@ function render(s) {
   $('startWhy').textContent = au.error ? 'Why: ' + au.error.why + ' How to fix: ' + au.error.fix : '';
   $('tBat').checked = s.config.batterySync !== false;
   $('tCmd').checked = !!s.config.allowCommands;
+  $('tCtl').checked = !!s.config.allowControl;
+  if (document.activeElement !== $('adbPath')) $('adbPath').value = s.config.adbPath || '';
   $('tColors').checked = s.config.systemColors;
   document.querySelectorAll('#seg button').forEach((b) => b.classList.toggle('on', b.dataset.theme === s.config.theme));
   $('colHint').textContent = s.platform === 'win32' || s.platform === 'darwin'
@@ -212,7 +214,7 @@ function render(s) {
   for (const id of [...lat.data.keys()]) if (!s.peers.some((p) => p.id === id)) { lat.data.delete(id); lat.open.delete(id); lat.hover.delete(id); }
   for (const p of s.peers) { if (p.lat) lat.data.set(p.id, p.lat); lat.addr.set(p.id, p.address); }
   const peersHtml = s.peers.length
-    ? s.peers.map((p) => `<div class="peer${enter(seen.peers, p.id)}" data-id="${esc(p.id)}"><div class="dropcue">${ic('download')}Drop to send to ${esc(p.name)}</div><div class="peer-top"><div class="avatar">${ic(platIc(p.platform))}<i class="dot"></i></div><div class="grow"><b>${esc(p.name)}</b><div class="dim s">${esc(platName(p.platform))}</div></div>${s.config.batterySync !== false && p.battery ? batHtml(p.battery) : ''}</div><div class="peer-actions"><button class="b sm sendbtn">${ic('send')}Send file</button><button class="b ghost sm sendfolderbtn">${ic('folder')}Send folder</button>${p.platform === 'android' ? (s.mounts || []).some((m) => m.id === p.id) ? `<button class="b ghost sm unmountbtn" title="Unmount the phone's storage">${ic('folder')}Unmount</button>` : `<button class="b ghost sm mountbtn" title="Show the phone's storage as a drive or network location">${ic('folder')}Mount storage</button>` : ''}<button class="b ghost sm unpairbtn${armed === p.id ? ' armed' : ''}" title="Unpair this device">${armed === p.id ? 'Confirm unpair' : ic('unlink')}</button></div><div class="lat" data-lat></div></div>`).join('')
+    ? s.peers.map((p) => `<div class="peer${enter(seen.peers, p.id)}" data-id="${esc(p.id)}"><div class="dropcue">${ic('download')}Drop to send to ${esc(p.name)}</div><div class="peer-top"><div class="avatar">${ic(platIc(p.platform))}<i class="dot"></i></div><div class="grow"><b>${esc(p.name)}</b><div class="dim s">${esc(platName(p.platform))}</div></div>${s.config.batterySync !== false && p.battery ? batHtml(p.battery) : ''}</div><div class="peer-actions"><button class="b sm sendbtn">${ic('send')}Send file</button><button class="b ghost sm sendfolderbtn">${ic('folder')}Send folder</button>${s.screen && s.screen.sharing === p.id ? `<button class="b sm stopsharebtn" title="Stop showing this screen">${ic('screen')}Stop sharing</button>${s.screen.controlled ? `<button class="b ghost sm stopctlbtn" title="Keep sharing, but stop the other device from controlling this computer">${ic('shield')}Stop control</button>` : ''}` : `<button class="b ghost sm sharebtn" title="Show this computer's screen on that device">${ic('screen')}Share screen</button>`}${p.platform === 'android' ? (s.mounts || []).some((m) => m.id === p.id) ? `<button class="b ghost sm unmountbtn" title="Unmount the phone's storage">${ic('folder')}Unmount</button>` : `<button class="b ghost sm mountbtn" title="Show the phone's storage as a drive or network location">${ic('folder')}Mount storage</button>` : ''}<button class="b ghost sm unpairbtn${armed === p.id ? ' armed' : ''}" title="Unpair this device">${armed === p.id ? 'Confirm unpair' : ic('unlink')}</button></div><div class="lat" data-lat></div></div>`).join('')
     : `<div class="card" style="grid-column:1/-1;margin:0"><div class="radar big"><div class="scan">${ic('wifi')}</div><b>Looking for devices…</b><span class="s">Open Y Connect on another device on the same Wi-Fi.</span><div class="steps"><span><i>1</i>Open Y Connect on your phone</span><span><i>2</i>Pick it under Nearby</span><span><i>3</i>Accept on the other device</span></div></div></div>`;
   setHtml($('peers'), peersHtml);
   for (const p of s.peers) paintLat(p.id);
@@ -327,6 +329,16 @@ $('tFiles').onchange = (e) => window.yconnect.setConfig({ acceptFiles: e.target.
 $('tStart').onchange = async (e) => { render(await window.yconnect.setConfig({ launchOnStartup: e.target.checked })); };
 document.querySelectorAll('#segStart button').forEach((b) => b.addEventListener('click', async () => { render(await window.yconnect.setConfig({ startHidden: b.dataset.hidden === '1' })); }));
 $('tBat').onchange = (e) => window.yconnect.setConfig({ batterySync: e.target.checked });
+async function checkAdb() {
+  const r = await window.yconnect.adbStatus();
+  $('adbState').classList.toggle('warn', !r.adb);
+  $('adbWhy').textContent = r.adb
+    ? 'adb found: ' + r.adb + (r.server ? '. Fast input (scrcpy-server ' + r.serverVersion + ') is available.' : '. scrcpy-server is missing, so basic input will be used.')
+    : 'adb was not found. Install Android platform-tools (or scrcpy), then press Save & check. Linux: sudo apt install adb / sudo pacman -S android-tools. Windows: winget install Google.PlatformTools.';
+}
+$('btnAdb').onclick = async () => { await window.yconnect.setConfig({ adbPath: $('adbPath').value }); await checkAdb(); };
+checkAdb();
+$('tCtl').onchange = (e) => window.yconnect.setConfig({ allowControl: e.target.checked });
 $('tCmd').onchange = (e) => window.yconnect.setConfig({ allowCommands: e.target.checked });
 $('btnSend').onclick = async () => {
   const n = await window.yconnect.sendClipboard();
@@ -382,6 +394,14 @@ $('peers').addEventListener('click', async (e) => {
   }
   const ub = e.target.closest('.unmountbtn');
   if (ub) { await window.yconnect.unmountStorage(ub.closest('.peer').dataset.id); toast('Unmounted'); return; }
+  const shb = e.target.closest('.sharebtn');
+  if (shb) {
+    const r = await window.yconnect.shareScreen(shb.closest('.peer').dataset.id);
+    if (r && !r.ok) toast(r.error || 'Could not share the screen');
+    return;
+  }
+  if (e.target.closest('.stopctlbtn')) { await window.yconnect.stopControl(); return; }
+  if (e.target.closest('.stopsharebtn')) { await window.yconnect.stopShareScreen(); return; }
   const fb = e.target.closest('.sendfolderbtn');
   if (fb) { window.yconnect.pickFolderAndSend(fb.closest('.peer').dataset.id); return; }
   const u = e.target.closest('.unpairbtn');

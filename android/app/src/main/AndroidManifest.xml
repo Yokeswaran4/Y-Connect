@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- lets this phone share its screen with a paired computer; Android asks the user every time -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <!-- lets the notification listener show real app names (sideloaded build, not for Play Store) -->
     <!-- lets a paired computer mount this phone's storage; only used after the user turns on "Share phone storage" -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
@@ -54,6 +56,33 @@
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
+
+        <!-- Full-screen picture of another device's screen (touch controls it when the other device allows it) -->
+        <activity
+            android:name=".ScreenViewActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
+            android:launchMode="singleTop"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+
+        <service
+            android:name=".ScreenShareService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
+        <!-- Injects the touches and keys of a remote viewer; the user has to switch it on in Accessibility settings -->
+        <service
+            android:name=".RemoteControlService"
+            android:exported="true"
+            android:label="@string/remote_control_service"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/remote_control_config" />
+        </service>
 
         <service
             android:name=".SyncService"

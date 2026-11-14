@@ -22,8 +22,9 @@ const crypto = require('crypto');
 const { app, dialog, shell, ipcMain, Notification } = require('electron');
 const { WebSocket } = require('ws');
 
-const CHUNK = 64 * 1024;
-const HIGH_WATER = 4 * 1024 * 1024; // pause reading the file while this much is queued on the socket
+const CHUNK = 256 * 1024;            // bigger frames = fewer cipher set-ups, syscalls and WebSocket frames per MB
+const HIGH_WATER = 8 * 1024 * 1024; // pause reading the file while this much is queued on the socket
+const WRITE_BUFFER = 4 * 1024 * 1024; // receiver's disk buffer; Node's 16 KB default made the socket stop after every frame
 const FINAL = new Set(['done', 'failed', 'rejected', 'cancelled']);
 
 let D = null;                // dependencies handed over by main.js
@@ -168,19 +169,25 @@ async function sendFile(peerId, filePath, rel) {
   t.done = offset;
   t.status = 'active';
   D.pushState();
-  const head = Buffer.alloc(4);
-  head.writeUInt32BE(t.tid);
-  const rs = fs.createReadStream(filePath, { highWaterMark: CHUNK, start: offset });
+  let fh = null;
   try {
     if (offset < t.size) {
-      for await (const chunk of rs) {
+      fh = await fs.promises.open(filePath, 'r');
+      // one reusable buffer: [tid][file data]; D.encryptBin must return a new buffer (the cipher does)
+      const buf = Buffer.allocUnsafe(4 + CHUNK);
+      buf.writeUInt32BE(t.tid, 0);
+      let pos = offset;
+      while (pos < t.size) {
         if (isFinal(t) || ws.readyState !== WebSocket.OPEN) throw new Error('stopped');
+        const { bytesRead } = await fh.read(buf, 4, CHUNK, pos);
+        if (bytesRead <= 0) break;
         while (ws.bufferedAmount > HIGH_WATER) {
-          await sleep(10);
+          await sleep(2);
           if (isFinal(t) || ws.readyState !== WebSocket.OPEN) throw new Error('stopped');
         }
-        ws.send(D.encryptBin(Buffer.concat([head, chunk]), ws));
-        t.done += chunk.length;
+        ws.send(D.encryptBin(buf.subarray(0, 4 + bytesRead), ws));
+        pos += bytesRead;
+        t.done += bytesRead;
         D.pushState();
       }
     }
@@ -188,9 +195,10 @@ async function sendFile(peerId, filePath, rel) {
     D.sendTo(ws, { type: 'file-end', tid: t.tid });
     t.ackTimer = setTimeout(() => finish(t, 'failed'), 30000); // finish(t,'done') happens on file-ack
   } catch {
-    rs.destroy();
     if (!isFinal(t)) { D.sendTo(ws, { type: 'file-cancel', tid: t.tid }); finish(t, 'failed'); }
     return t.disconnected ? 'disconnected' : 'failed';
+  } finally {
+    if (fh) fh.close().catch(() => {});
   }
   // wait for the receiver's final answer so the next file in a folder starts only after this one is safe
   await new Promise((resolve) => { const iv = setInterval(() => { if (isFinal(t)) { clearInterval(iv); resolve(); } }, 50); });
@@ -318,12 +326,12 @@ function onOffer(ws, msg) {
       else { try { fs.unlinkSync(pp.part); } catch {} }
       fs.writeFileSync(pp.meta, JSON.stringify({ size, name: fileName, rel: segs.join('/'), at: Date.now() }));
       const fd = fs.openSync(pp.part, offset ? 'a' : 'w');
-      stream = fs.createWriteStream(pp.part, { fd });
+      stream = fs.createWriteStream(pp.part, { fd, highWaterMark: WRITE_BUFFER });
       full = pp.part;
       shownName = segs.join('/');
     } else {
       const f = openUnique(subDir, fileName); // older sender: write straight to the final place
-      stream = fs.createWriteStream(f.full, { fd: f.fd });
+      stream = fs.createWriteStream(f.full, { fd: f.fd, highWaterMark: WRITE_BUFFER });
       full = f.full;
       shownName = segs.slice(0, -1).concat(f.name).join('/');
     }

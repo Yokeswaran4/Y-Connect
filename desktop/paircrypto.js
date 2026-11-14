@@ -45,8 +45,13 @@ function open(key, b64) {
 function sealBytes(key, buf) {
   const iv = crypto.randomBytes(12);
   const c = crypto.createCipheriv('aes-256-gcm', key, iv);
-  const enc = Buffer.concat([c.update(buf), c.final()]);
-  return Buffer.concat([iv, enc, c.getAuthTag()]);
+  const enc = c.update(buf);
+  c.final(); // GCM is a stream mode: final() adds nothing
+  const out = Buffer.allocUnsafe(12 + enc.length + 16); // iv + ciphertext + tag, assembled with a single copy
+  iv.copy(out, 0);
+  enc.copy(out, 12);
+  c.getAuthTag().copy(out, 12 + enc.length);
+  return out;
 }
 function openBytes(key, b) {
   if (b.length < 29) throw new Error('short');
